@@ -1,0 +1,11 @@
+# Caddy reverse proxy configuration
+
+# Local development / HTTP only
+:80 {
+    reverse_proxy 127.0.0.1:8080
+}
+
+# When ready for production with a domain, replace the above with:
+# kiwi.yourdomain.com {
+#     reverse_proxy 127.0.0.1:8080
+# }

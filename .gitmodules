@@ -1,0 +1,3 @@
+[submodule "services/orchestrator"]
+	path = services/orchestrator
+	url = https://github.com/kr812345/synapse.git

@@ -352,6 +352,16 @@
   }
 
   // 8. User Sending Messages
+
+  function appendAssistantMessage(msg) {
+    const row = document.createElement('div');
+    row.className = 'message-row assistant';
+    row.innerHTML = `<div class="message-avatar-mini" style="border:none; background:transparent;"><img src="/icon.svg" alt="Kiwi" style="width:100%; height:100%;"></div>
+      <div><div class="message-bubble">${msg}</div></div>`;
+    chatMessages.appendChild(row);
+    scrollToBottom();
+  }
+
   function sendMessage(text) {
     const trimmed = (text || '').trim();
     if (!trimmed) return;

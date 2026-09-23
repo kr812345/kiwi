@@ -375,7 +375,11 @@
     row.appendChild(bubble);
     chatMessages.appendChild(row);
     scrollToBottom();
-    
+
+    if (navigator.vibrate) {
+      try { navigator.vibrate(50); } catch(e) {}
+    }
+
     const emotion = detectEmotion(trimmed);
     if (emotion) {
       setAvatarState(emotion);
@@ -457,11 +461,27 @@
       const text = chatInput ? chatInput.value : '';
       if (text.trim()) {
         sendMessage(text);
-        if (chatInput) {
+      
+  if (chatInput) {
+    chatInput.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = (this.scrollHeight) + 'px';
+    });
+  }
+
+  if (chatInput) {
           chatInput.value = '';
           chatInput.style.height = 'auto';
         }
       }
+    });
+  }
+
+
+  if (chatInput) {
+    chatInput.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = (this.scrollHeight) + 'px';
     });
   }
 
@@ -487,7 +507,15 @@
       if (prompt) {
         if (chatInput) chatInput.value = prompt;
         sendMessage(prompt);
-        if (chatInput) {
+      
+  if (chatInput) {
+    chatInput.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = (this.scrollHeight) + 'px';
+    });
+  }
+
+  if (chatInput) {
           chatInput.value = '';
           chatInput.style.height = 'auto';
         }

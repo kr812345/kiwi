@@ -63,7 +63,7 @@ export default function Splash() {
       </div>
 
       <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '16px', paddingBottom: '32px' }}>
-        <Link href="/home" style={{ textDecoration: 'none' }}>
+        <Link href="/chat" style={{ textDecoration: 'none' }}>
           <button className="btn-primary">
             Continue 
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

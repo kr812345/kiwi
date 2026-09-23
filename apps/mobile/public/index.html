@@ -36,13 +36,6 @@
         </div>
       </div>
       <div class="header-right">
-        <button id="settings-btn" class="icon-btn" title="Menu">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="5" r="1.5"></circle>
-            <circle cx="12" cy="12" r="1.5"></circle>
-            <circle cx="12" cy="19" r="1.5"></circle>
-          </svg>
-        </button>
       </div>
     </header>
 
@@ -75,35 +68,6 @@
     </div>
 
     <!-- Settings & Auth Modal -->
-    <div id="auth-modal" class="modal-overlay">
-      <div class="modal-card">
-        <div class="modal-header">
-          <h3 class="modal-title">🥝 Gateway Settings & Auth</h3>
-          <button id="close-modal-btn" class="icon-btn" title="Close">&times;</button>
-        </div>
-
-        <div id="modal-feedback" class="modal-feedback"></div>
-
-        <form id="auth-form">
-          <div class="form-group">
-            <label for="server-url-input">GATEWAY SERVER URL</label>
-            <input type="text" id="server-url-input" placeholder="http://127.0.0.1:8080" autocomplete="off" spellcheck="false">
-            <div class="form-hint">Leave empty to use current host origin.</div>
-          </div>
-
-          <div class="form-group">
-            <label for="api-token-input">API BEARER TOKEN</label>
-            <input type="password" id="api-token-input" placeholder="Enter API Bearer Token" autocomplete="current-password" required>
-            <div class="form-hint">Default dev token: <code>kiwi_secret_token_dev</code></div>
-          </div>
-
-          <div class="modal-actions">
-            <button type="button" id="test-connection-btn" class="btn btn-test">Test Connection</button>
-            <button type="submit" id="save-settings-btn" class="btn btn-primary">Save & Connect</button>
-          </div>
-        </form>
-      </div>
-    </div>
   </div>
 
   <!-- PWA Logic -->

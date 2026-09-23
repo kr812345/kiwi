@@ -7,11 +7,16 @@ const destFile = path.join(__dirname, 'public', 'app.js');
 let content = fs.readFileSync(srcFile, 'utf-8');
 
 const apiUrl = process.env.PUBLIC_API_URL || 'http://127.0.0.1:8080';
+const apiToken = process.env.PUBLIC_API_TOKEN || 'kiwi_secret_token_dev';
 
-// Replace the fallback origin with the API URL
+// Replace the URLs and tokens to completely hardcode them
 content = content.replace(
   "let serverUrl = localStorage.getItem(STORAGE_KEY_URL) || window.location.origin;",
-  `let serverUrl = localStorage.getItem(STORAGE_KEY_URL) || '${apiUrl}';`
+  `let serverUrl = '${apiUrl}';`
+);
+content = content.replace(
+  "let apiToken = localStorage.getItem(STORAGE_KEY_TOKEN) || DEFAULT_DEV_TOKEN;",
+  `let apiToken = '${apiToken}';`
 );
 
 fs.writeFileSync(destFile, content);

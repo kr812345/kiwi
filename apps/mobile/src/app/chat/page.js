@@ -90,7 +90,7 @@ export default function Chat() {
           </button>
         </form>
         <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '10px', color: 'var(--text-muted)' }}>
-          Kiwi • Synapse OS Stream <span style={{ color: 'var(--primary)' }}>●</span>
+          
         </div>
       </div>
 

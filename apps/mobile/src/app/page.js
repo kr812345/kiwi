@@ -6,11 +6,13 @@ import { useRouter } from 'next/navigation';
 
 export default function Splash() {
   const [isStandalone, setIsStandalone] = useState(false);
+  const [mood, setMood] = useState('happy');
   const [deferredPrompt, setDeferredPrompt] = useState(null);
 
   const router = useRouter();
 
   useEffect(() => {
+    setTimeout(() => setMood('neutral'), 1500);
     // Check if running as PWA
     const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
     if (isStandaloneMode) {
@@ -52,7 +54,7 @@ export default function Splash() {
     <div className="page-container splash-container" style={{ alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
       
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ marginBottom: '24px', boxShadow: '0 0 30px var(--primary-glow)', borderRadius: '40px' }}><KiwiMascot variant="icon" mood="happy" size={120} /></div>
+        <div style={{ marginBottom: '24px', boxShadow: '0 0 30px var(--primary-glow)', borderRadius: '40px' }}><KiwiMascot variant="icon" mood={mood} size={120} /></div>
         
         <h1 style={{ fontSize: '48px', fontWeight: 'bold', marginBottom: '16px', color: '#fff' }}>Kiwi</h1>
         

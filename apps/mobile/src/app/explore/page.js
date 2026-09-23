@@ -27,7 +27,7 @@ export default function Explore() {
           <span className="text-primary">with a conversation.</span>
         </h2>
         <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '16px', maxWidth: '60%' }}>
-          Ask Kiwi anything — code, ideas, clarifications or just random thoughts.
+          Ask Kiwi anything - code, ideas, clarifications or just random thoughts.
         </p>
         <Link href="/chat" style={{ textDecoration: 'none' }}>
           <button className="btn-primary" style={{ width: 'auto', padding: '12px 20px', fontSize: '14px' }}>

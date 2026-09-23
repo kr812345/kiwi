@@ -85,7 +85,7 @@ export default function Profile() {
       {/* Quote Banner */}
       <div className="glass-panel" style={{ padding: '24px', marginBottom: '24px', position: 'relative' }}>
         <h3 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '8px' }}>Better questions.<br/>Brighter ideas.</h3>
-        <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>— Kiwi</p>
+        <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>- Kiwi</p>
         <div style={{ position: 'absolute', right: '16px', bottom: '16px' }}>
           <span style={{ fontSize: '48px', color: 'var(--primary)', fontWeight: 'bold' }}>^_^</span>
         </div>

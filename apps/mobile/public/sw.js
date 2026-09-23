@@ -1,5 +1,5 @@
 // Kiwi AI Assistant - Service Worker
-const CACHE_NAME = 'kiwi-shell-v1';
+const CACHE_NAME = 'kiwi-shell-v2';
 const SHELL_ASSETS = [
   '/',
   '/index.html',

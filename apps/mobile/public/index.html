@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  
+  <!-- PWA & Theme Meta Tags -->
+  <title>Kiwi AI Assistant</title>
+  <meta name="description" content="Personal AI Assistant & Senior Full-Stack Engineer powered by Synapse OS">
+  <meta name="theme-color" content="#0D1117">
+  <meta name="background-color" content="#0D1117">
+  
+  <!-- iOS Safari PWA Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Kiwi">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+  
+  <!-- Favicon and PWA Manifest -->
+  <link rel="icon" type="image/svg+xml" href="/icon.svg">
+  <link rel="manifest" href="/manifest.json">
+  
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div id="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="avatar-container">
+          <span id="kiwi-avatar" class="avatar-face state-idle">^_^</span>
+        </div>
+        <div class="header-titles">
+          <div class="app-title">Kiwi</div>
+        </div>
+      </div>
+      <div class="header-right">
+        <button id="settings-btn" class="icon-btn" title="Menu">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="5" r="1.5"></circle>
+            <circle cx="12" cy="12" r="1.5"></circle>
+            <circle cx="12" cy="19" r="1.5"></circle>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Chat Messages Scroll Container -->
+    <main id="chat-messages" class="chat-messages">
+      <!-- Initial Welcome Message from Kiwi Persona -->
+      <div class="message-row assistant">
+        <div class="message-avatar-mini" style="border:none; background:transparent;">
+          <img src="/icon.svg" alt="Kiwi" style="width:100%; height:100%;">
+        </div>
+        <div>
+          <div class="message-bubble">
+            Hi Kiwi here, give me some work.. i am feeling bored..
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Input Bar -->
+    <div class="chat-input-bar">
+      <form id="chat-form" class="chat-form">
+        <textarea id="chat-input" class="chat-input" placeholder="Message Kiwi..." rows="1"></textarea>
+        <button type="submit" id="send-btn" class="send-btn" title="Send" disabled>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </form>
+    </div>
+
+    <!-- Settings & Auth Modal -->
+    <div id="auth-modal" class="modal-overlay">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3 class="modal-title">🥝 Gateway Settings & Auth</h3>
+          <button id="close-modal-btn" class="icon-btn" title="Close">&times;</button>
+        </div>
+
+        <div id="modal-feedback" class="modal-feedback"></div>
+
+        <form id="auth-form">
+          <div class="form-group">
+            <label for="server-url-input">GATEWAY SERVER URL</label>
+            <input type="text" id="server-url-input" placeholder="http://127.0.0.1:8080" autocomplete="off" spellcheck="false">
+            <div class="form-hint">Leave empty to use current host origin.</div>
+          </div>
+
+          <div class="form-group">
+            <label for="api-token-input">API BEARER TOKEN</label>
+            <input type="password" id="api-token-input" placeholder="Enter API Bearer Token" autocomplete="current-password" required>
+            <div class="form-hint">Default dev token: <code>kiwi_secret_token_dev</code></div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" id="test-connection-btn" class="btn btn-test">Test Connection</button>
+            <button type="submit" id="save-settings-btn" class="btn btn-primary">Save & Connect</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- PWA Logic -->
+  <script src="/app.js"></script>
+</body>
+</html>

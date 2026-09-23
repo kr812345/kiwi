@@ -1,0 +1,155 @@
+{
+  "timestamp": "2026-09-21T00:41:01Z",
+  "baseline": {
+    "gateway": {
+      "pm2": {
+        "name": "kiwi-gateway",
+        "pid": 807896,
+        "status": "online",
+        "restart_time": 6,
+        "memory": 11476992,
+        "cpu": 0.4
+      },
+      "proc": {
+        "pid": 807896,
+        "vmsize_kb": 1827664,
+        "rss_kb": 10988,
+        "threads": 9,
+        "open_fds": 8
+      }
+    },
+    "brain": {
+      "pm2": {
+        "name": "kiwi-brain",
+        "pid": 773706,
+        "status": "online",
+        "restart_time": 12,
+        "memory": 13082624,
+        "cpu": 0
+      },
+      "proc": {
+        "pid": 773706,
+        "vmsize_kb": 140808,
+        "rss_kb": 12484,
+        "threads": 1,
+        "open_fds": 8
+      }
+    }
+  },
+  "challenges": {
+    "1_concurrent_pwa_clients": {
+      "num_clients": 25,
+      "success_count": 25,
+      "failure_count": 0,
+      "success_rate": 100.0,
+      "avg_total_duration_s": 1.0789,
+      "max_total_duration_s": 1.0891,
+      "min_total_duration_s": 1.0636,
+      "avg_ttft_s": 0.0448
+    },
+    "2_rapid_message_bursts": {
+      "single_client_burst": {
+        "burst_count": 10,
+        "completes_received": 1,
+        "total_frames": 32,
+        "status": "PASSED"
+      },
+      "multi_client_storm": {
+        "workers": 5,
+        "bursts_per_worker": 5,
+        "success_workers": 5,
+        "status": "PASSED"
+      }
+    },
+    "3_disconnect_and_backoff_reconnect": [
+      {
+        "cycle": 1,
+        "cutoff_token": 2,
+        "backoff_sec": 1.0,
+        "reconnect_time_s": 0.002,
+        "reconnect_tokens": 18,
+        "status": "PASSED"
+      },
+      {
+        "cycle": 2,
+        "cutoff_token": 4,
+        "backoff_sec": 1.5,
+        "reconnect_time_s": 0.007,
+        "reconnect_tokens": 18,
+        "status": "PASSED"
+      },
+      {
+        "cycle": 3,
+        "cutoff_token": 6,
+        "backoff_sec": 2.25,
+        "reconnect_time_s": 0.003,
+        "reconnect_tokens": 18,
+        "status": "PASSED"
+      },
+      {
+        "cycle": 4,
+        "cutoff_token": 8,
+        "backoff_sec": 3.38,
+        "reconnect_time_s": 0.005,
+        "reconnect_tokens": 18,
+        "status": "PASSED"
+      }
+    ],
+    "4_malformed_frames": {
+      "corrupt_json": "PASSED",
+      "unknown_types": "PASSED",
+      "oversized_frame": "PASSED",
+      "binary_frames": "PASSED"
+    },
+    "5_adversarial_auth": {
+      "invalid_query_token": "PASSED",
+      "invalid_bearer_header": "PASSED",
+      "invalid_auth_frame": "PASSED",
+      "unauth_chat_rejected": "PASSED",
+      "auth_timeout_5s": "PASSED",
+      "auth_flood": "PASSED"
+    },
+    "6_pwa_client_contracts": {
+      "status": "PASSED"
+    }
+  },
+  "post_test": {
+    "gateway": {
+      "pm2": {
+        "name": "kiwi-gateway",
+        "pid": 807896,
+        "status": "online",
+        "restart_time": 6,
+        "memory": 11870208,
+        "cpu": 0.3
+      },
+      "proc": {
+        "pid": 807896,
+        "vmsize_kb": 1827664,
+        "rss_kb": 11812,
+        "threads": 9,
+        "open_fds": 8
+      },
+      "restart_delta": 0
+    },
+    "brain": {
+      "pm2": {
+        "name": "kiwi-brain",
+        "pid": 773706,
+        "status": "online",
+        "restart_time": 12,
+        "memory": 17408000,
+        "cpu": 2.6
+      },
+      "proc": {
+        "pid": 773706,
+        "vmsize_kb": 140808,
+        "rss_kb": 17052,
+        "threads": 1,
+        "open_fds": 8
+      },
+      "restart_delta": 0
+    }
+  },
+  "overall_status": "PASSED"
+}

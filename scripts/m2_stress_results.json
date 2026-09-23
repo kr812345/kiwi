@@ -1,0 +1,147 @@
+{
+  "concurrency_10": {
+    "num_clients": 10,
+    "total_wall_time_s": 0.573,
+    "successful_clients": 10,
+    "failed_clients": 0,
+    "success_rate_pct": 100.0,
+    "token_mixing_detected": false,
+    "mixing_details": [],
+    "total_tokens_received": 180,
+    "overall_token_throughput_tps": 314.06,
+    "connect_latency_ms": {
+      "min": 12.11,
+      "max": 50.04,
+      "avg": 19.34,
+      "median": 16.9,
+      "p95": 50.04,
+      "stddev": 10.51
+    },
+    "ttft_ms": {
+      "min": 35.91,
+      "max": 46.71,
+      "avg": 43.87,
+      "median": 44.95,
+      "p95": 46.71,
+      "stddev": 3.06
+    },
+    "token_interval_cadence_ms": {
+      "min": 23.21,
+      "max": 28.06,
+      "avg": 26.08,
+      "median": 26.06,
+      "p95": 27.35,
+      "stddev": 0.81
+    },
+    "total_stream_duration_ms": {
+      "min": 504.8,
+      "max": 518.97,
+      "avg": 515.15,
+      "median": 517.35,
+      "p95": 518.97,
+      "stddev": 4.15
+    },
+    "failed_details": []
+  },
+  "concurrency_20": {
+    "num_clients": 20,
+    "total_wall_time_s": 0.546,
+    "successful_clients": 20,
+    "failed_clients": 0,
+    "success_rate_pct": 100.0,
+    "token_mixing_detected": false,
+    "mixing_details": [],
+    "total_tokens_received": 360,
+    "overall_token_throughput_tps": 658.93,
+    "connect_latency_ms": {
+      "min": 13.99,
+      "max": 18.56,
+      "avg": 16.27,
+      "median": 16.27,
+      "p95": 18.56,
+      "stddev": 1.37
+    },
+    "ttft_ms": {
+      "min": 11.99,
+      "max": 39.96,
+      "avg": 34.47,
+      "median": 36.98,
+      "p95": 39.96,
+      "stddev": 6.94
+    },
+    "token_interval_cadence_ms": {
+      "min": 22.68,
+      "max": 30.48,
+      "avg": 26.3,
+      "median": 26.22,
+      "p95": 27.8,
+      "stddev": 1.02
+    },
+    "total_stream_duration_ms": {
+      "min": 485.88,
+      "max": 523.25,
+      "avg": 511.36,
+      "median": 514.24,
+      "p95": 523.25,
+      "stddev": 8.93
+    },
+    "failed_details": []
+  },
+  "edge_cases": {
+    "empty_message": {
+      "behavior": "silently_ignored"
+    },
+    "malformed_json": {
+      "behavior": "silently_ignored"
+    },
+    "unknown_type": {
+      "behavior": "silently_ignored"
+    },
+    "unauth_chat": {
+      "behavior": "closed_4401",
+      "code": 4401,
+      "reason": "Unauthorized - Please authenticate first"
+    },
+    "auth_timeout": {
+      "behavior": "closed_timeout",
+      "code": 4401,
+      "reason": "Authentication timeout",
+      "elapsed_s": 5.0
+    },
+    "stream_preemption": {
+      "total_frames": 23,
+      "c1_completed": false,
+      "c2_completed": true,
+      "frame_types": [
+        "status.thinking",
+        "chat.stream",
+        "chat.stream",
+        "status.thinking",
+        "chat.stream",
+        "chat.stream",
+        "chat.stream",
+        "chat.stream",
+        "chat.stream",
+        "chat.stream",
+        "chat.stream",
+        "chat.stream",
+        "chat.stream",
+        "chat.stream",
+        "chat.stream",
+        "chat.stream",
+        "chat.stream",
+        "chat.stream",
+        "chat.stream",
+        "chat.stream",
+        "chat.stream",
+        "chat.stream",
+        "chat.complete"
+      ]
+    },
+    "oversized_frame": {
+      "behavior": "closed",
+      "code": 1009,
+      "reason": ""
+    }
+  }
+}

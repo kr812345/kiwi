@@ -2,10 +2,13 @@ package db
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/jackc/pgx/v5"
 )
+
+var ErrDatabaseNotConnected = errors.New("database connection not initialized")
 
 type Conversation struct {
 	ID        string    `json:"id"`
@@ -25,6 +28,9 @@ type Message struct {
 
 // CreateConversation initializes a new thread in the database
 func CreateConversation(ctx context.Context, title string) (string, error) {
+	if Pool == nil {
+		return "", ErrDatabaseNotConnected
+	}
 	var id string
 	err := Pool.QueryRow(ctx, "INSERT INTO conversations (title) VALUES ($1) RETURNING id", title).Scan(&id)
 	return id, err
@@ -32,11 +38,17 @@ func CreateConversation(ctx context.Context, title string) (string, error) {
 
 // InsertMessage stores a message and bumps the conversation's updated_at timestamp
 func InsertMessage(ctx context.Context, convID, role, content string) (string, error) {
+	if Pool == nil {
+		return "", ErrDatabaseNotConnected
+	}
 	var id string
 	err := Pool.QueryRow(ctx, "INSERT INTO messages (conversation_id, role, content) VALUES ($1, $2, $3) RETURNING id", convID, role, content).Scan(&id)
 	if err == nil {
 		// Asynchronously bump the updated_at timestamp to keep conversation sorting fresh
 		go func() {
+			if Pool == nil {
+				return
+			}
 			bgCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 			defer cancel()
 			Pool.Exec(bgCtx, "UPDATE conversations SET updated_at = NOW() WHERE id = $1", convID)
@@ -47,6 +59,9 @@ func InsertMessage(ctx context.Context, convID, role, content string) (string, e
 
 // GetMessages retrieves the full timeline of a conversation
 func GetMessages(ctx context.Context, convID string) ([]Message, error) {
+	if Pool == nil {
+		return nil, ErrDatabaseNotConnected
+	}
 	rows, err := Pool.Query(ctx, 
 		"SELECT id, conversation_id, role, content, metadata::text, created_at FROM messages WHERE conversation_id = $1 ORDER BY created_at ASC", 
 		convID,
@@ -62,3 +77,4 @@ func GetMessages(ctx context.Context, convID string) ([]Message, error) {
 		return m, err
 	})
 }
+

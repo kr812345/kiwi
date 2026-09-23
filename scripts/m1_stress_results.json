@@ -1,0 +1,196 @@
+{
+  "timestamp": "2026-09-20T21:19:04Z",
+  "concurrency": {
+    "total_requests": 20,
+    "successful_requests": 20,
+    "failed_requests": 0,
+    "failure_rate_pct": 0.0,
+    "total_wall_time_s": 0.8401503009954467,
+    "throughput_req_per_s": 23.805264339372524,
+    "latency_min_ms": 65.78,
+    "latency_avg_ms": 143.08,
+    "latency_median_ms": 130.72,
+    "latency_p95_ms": 238.71,
+    "latency_max_ms": 238.71,
+    "unique_conversation_ids": 1,
+    "sample_response": {
+      "conversation_id": "conv-20260921024903",
+      "response": "yo! kiwi here \u2014 received: 'concurrency stress test message #0 \ud83e\udd5d'. all systems operational and ready to ship code! \ud83e\udd5d"
+    },
+    "failures": []
+  },
+  "malformed_inputs": [
+    {
+      "name": "Empty message string",
+      "status_code": 503,
+      "latency_ms": 11.83,
+      "response_preview": "{'error': 'Brain temporarily unavailable: brain returned status 400'}",
+      "gateway_survived": true
+    },
+    {
+      "name": "Whitespace-only message",
+      "status_code": 503,
+      "latency_ms": 7.76,
+      "response_preview": "{'error': 'Brain temporarily unavailable: brain returned status 400'}",
+      "gateway_survived": true
+    },
+    {
+      "name": "Missing message field in JSON",
+      "status_code": 503,
+      "latency_ms": 11.26,
+      "response_preview": "{'error': 'Brain temporarily unavailable: brain returned status 400'}",
+      "gateway_survived": true
+    },
+    {
+      "name": "Empty JSON object",
+      "status_code": 503,
+      "latency_ms": 9.74,
+      "response_preview": "{'error': 'Brain temporarily unavailable: brain returned status 400'}",
+      "gateway_survived": true
+    },
+    {
+      "name": "Non-JSON raw text payload",
+      "status_code": 400,
+      "latency_ms": 3.3,
+      "response_preview": "Invalid request body\n",
+      "gateway_survived": true
+    },
+    {
+      "name": "Malformed JSON syntax",
+      "status_code": 400,
+      "latency_ms": 3.49,
+      "response_preview": "Invalid request body\n",
+      "gateway_survived": true
+    },
+    {
+      "name": "Huge payload (10KB text)",
+      "status_code": 200,
+      "latency_ms": 16.32,
+      "response_preview": "{'conversation_id': 'conv-20260921024903', 'response': \"yo! kiwi here \u2014 received: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "gateway_survived": true
+    },
+    {
+      "name": "Very large payload (100KB text)",
+      "status_code": 200,
+      "latency_ms": 47.01,
+      "response_preview": "{'conversation_id': 'conv-20260921024903', 'response': \"yo! kiwi here \u2014 received: 'kiwienginestresstestkiwienginestresstestkiwienginestresstestkiwieng",
+      "gateway_survived": true
+    },
+    {
+      "name": "Special characters & SQL injection string",
+      "status_code": 200,
+      "latency_ms": 29.18,
+      "response_preview": "{'conversation_id': 'conv-20260921024903', 'response': \"yo! kiwi here \u2014 received: 'robert'); drop table chat_sessions; -- ' or 1=1;'. all systems oper",
+      "gateway_survived": true
+    },
+    {
+      "name": "XSS script injection string",
+      "status_code": 200,
+      "latency_ms": 28.36,
+      "response_preview": "{'conversation_id': 'conv-20260921024904', 'response': \"yo! kiwi here \u2014 received: '<script>alert('xss')</script><img src=x onerror=alert(1)>'. all sys",
+      "gateway_survived": true
+    },
+    {
+      "name": "Unicode emojis and multi-byte characters",
+      "status_code": 200,
+      "latency_ms": 49.32,
+      "response_preview": "{'conversation_id': 'conv-20260921024904', 'response': \"yo! kiwi here \u2014 received: '\ud83e\udd5d \ud83d\ude80 \ud83d\udd25 \ud83e\udd16 \ud83e\udde0 \ud83d\udc7e \ud83d\udcbb \ud83c\udf08 \ud83e\udd84 \u26a1 \ud83d\udca5 \ud83c\udfaf \ud83e\uddbe'. all systems operational and ready to sh",
+      "gateway_survived": true
+    },
+    {
+      "name": "Multilingual text (CJK, Arabic, Cyrillic, RTL)",
+      "status_code": 200,
+      "latency_ms": 40.76,
+      "response_preview": "{'conversation_id': 'conv-20260921024904', 'response': \"yo! kiwi here \u2014 received: '\u4f60\u597d\u4e16\u754c | \u3053\u3093\u306b\u3061\u306f\u4e16\u754c | \u0645\u0631\u062d\u0628\u0627 \u0628\u0627\u0644\u0639\u0627\u0644\u0645 | \u043f\u0440\u0438\u0432\u0435\u0442 \u043c\u0438\u0440 | \u05e9\u05dc\u05d5\u05dd \u05e2\u05d5\u05dc\u05dd'. all syste",
+      "gateway_survived": true
+    },
+    {
+      "name": "Control characters, tabs and newlines",
+      "status_code": 200,
+      "latency_ms": 24.75,
+      "response_preview": "{'conversation_id': 'conv-20260921024904', 'response': \"yo! kiwi here \u2014 received: 'line 1\\nline 2\\ttabbed\\r\\nline 3\\x08\\x0c\\\\'. all systems operationa",
+      "gateway_survived": true
+    }
+  ],
+  "auth_security": [
+    {
+      "name": "Missing Authorization header entirely",
+      "url": "http://127.0.0.1:8080/api/secure/chat",
+      "status_code": 401,
+      "expected_status": 401,
+      "passed": true,
+      "response_text": "Unauthorized - Missing token"
+    },
+    {
+      "name": "Invalid token string",
+      "url": "http://127.0.0.1:8080/api/secure/chat",
+      "status_code": 401,
+      "expected_status": 401,
+      "passed": true,
+      "response_text": "Unauthorized - Invalid token"
+    },
+    {
+      "name": "Missing 'Bearer ' prefix (raw token only)",
+      "url": "http://127.0.0.1:8080/api/secure/chat",
+      "status_code": 401,
+      "expected_status": 401,
+      "passed": true,
+      "response_text": "Unauthorized - Invalid token format"
+    },
+    {
+      "name": "Bearer with no token attached",
+      "url": "http://127.0.0.1:8080/api/secure/chat",
+      "status_code": 0,
+      "expected_status": 401,
+      "passed": false,
+      "error": "Illegal header value b'Bearer '"
+    },
+    {
+      "name": "Basic auth header scheme",
+      "url": "http://127.0.0.1:8080/api/secure/chat",
+      "status_code": 401,
+      "expected_status": 401,
+      "passed": true,
+      "response_text": "Unauthorized - Invalid token format"
+    },
+    {
+      "name": "Missing Authorization on secure /ping",
+      "url": "http://127.0.0.1:8080/api/secure/ping",
+      "status_code": 401,
+      "expected_status": 401,
+      "passed": true,
+      "response_text": "Unauthorized - Missing token"
+    },
+    {
+      "name": "Valid token on secure /ping",
+      "url": "http://127.0.0.1:8080/api/secure/ping",
+      "status_code": 200,
+      "expected_status": 200,
+      "passed": true,
+      "response_text": "{\"message\":\"pong - authenticated successfully!\"}"
+    },
+    {
+      "name": "Public root /health without auth",
+      "url": "http://127.0.0.1:8080/health",
+      "status_code": 200,
+      "expected_status": 200,
+      "passed": true,
+      "response_text": "{\"status\":\"ok\",\"message\":\"Kiwi API Gateway is running\",\"version\":\"0.1.0\",\"database\":\"disconnected\",\"brain\":\"connected\"}"
+    },
+    {
+      "name": "Public /api/health without auth",
+      "url": "http://127.0.0.1:8080/api/health",
+      "status_code": 200,
+      "expected_status": 200,
+      "passed": true,
+      "response_text": "{\"status\":\"ok\",\"message\":\"Kiwi API Gateway is running\",\"version\":\"0.1.0\",\"database\":\"disconnected\",\"brain\":\"connected\"}"
+    }
+  ],
+  "post_stress_health": {
+    "status": "ok",
+    "message": "Kiwi API Gateway is running",
+    "version": "0.1.0",
+    "database": "disconnected",
+    "brain": "connected"
+  }
+}

@@ -690,5 +690,21 @@
     });
   }
 
+
+  // Bottom Nav Hide on Keyboard
+  const bottomNav = document.getElementById('bottom-nav');
+  if (chatInput && bottomNav) {
+    chatInput.addEventListener('focus', () => {
+      bottomNav.style.display = 'none';
+      scrollToBottom();
+    });
+    chatInput.addEventListener('blur', () => {
+      setTimeout(() => {
+        bottomNav.style.display = 'flex';
+        scrollToBottom();
+      }, 100);
+    });
+  }
+
 })();
 

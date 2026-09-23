@@ -1,15 +1,26 @@
 'use client';
+import KiwiMascot from '@/components/KiwiMascot';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Splash() {
   const [isStandalone, setIsStandalone] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
 
+  const router = useRouter();
+
   useEffect(() => {
     // Check if running as PWA
-    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+    const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    if (isStandaloneMode) {
       setIsStandalone(true);
+      const hasVisited = localStorage.getItem('has_visited_pwa');
+      if (hasVisited) {
+        router.push('/chat');
+      } else {
+        localStorage.setItem('has_visited_pwa', 'true');
+      }
     }
 
     const handleBeforeInstallPrompt = (e) => {
@@ -34,31 +45,19 @@ export default function Splash() {
         setDeferredPrompt(null);
       }
     } else {
-      alert('To install the app, please use your browser\'s "Add to Home Screen" feature.');
+      alert("To install the app, please use your browser's \"Add to Home Screen\" feature.");
     }
   };
   return (
     <div className="page-container splash-container" style={{ alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
       
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ 
-          width: '120px', 
-          height: '120px', 
-          border: '2px solid var(--primary)', 
-          borderRadius: '40px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: '0 0 30px var(--primary-glow)',
-          marginBottom: '24px'
-        }}>
-          <span style={{ fontSize: '48px', color: 'var(--text)', fontWeight: 'bold' }}>^_^</span>
-        </div>
+        <div style={{ marginBottom: '24px', boxShadow: '0 0 30px var(--primary-glow)', borderRadius: '40px' }}><KiwiMascot variant="icon" mood="happy" size={120} /></div>
         
         <h1 style={{ fontSize: '48px', fontWeight: 'bold', marginBottom: '16px', color: '#fff' }}>Kiwi</h1>
         
         <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '18px', maxWidth: '280px', lineHeight: '1.5' }}>
-          Your AI buddy for code, ideas and random talks.
+          {isStandalone ? "Your AI buddy for code, ideas and random talks." : "For a better experience, please install the app on your mobile device."}
         </p>
       </div>
 

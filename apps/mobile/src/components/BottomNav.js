@@ -42,7 +42,7 @@ export default function BottomNav() {
   ];
 
   // Hide on splash and voice screens
-  if (pathname === '/' || pathname === '/voice') {
+  if (pathname === '/') {
     return null; 
   }
 

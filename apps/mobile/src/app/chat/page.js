@@ -1,15 +1,11 @@
 'use client';
+import KiwiMascot from '@/components/KiwiMascot';
 import Link from 'next/link';
 import { useState, useRef, useEffect } from 'react';
+import { useKiwiChat } from '@/hooks/useKiwiChat';
 
 export default function Chat() {
-  const [messages, setMessages] = useState([
-    { id: 1, role: 'assistant', content: 'Hi Kiwi here, give me some work.. i am feeling bored..' },
-    { id: 2, role: 'user', content: 'hi' },
-    { id: 3, role: 'assistant', content: 'i am under development right now and can talk a little, so see you later! ^_^' },
-    { id: 4, role: 'user', content: 'hi' },
-    { id: 5, role: 'assistant', content: 'yo! kiwi here — received: \'hi\'. all systems operational and ready to ship code! 🥝' }
-  ]);
+  const { messages, sendMessage, isConnected, isTyping, mascotMood } = useKiwiChat();
   const [input, setInput] = useState('');
   const messagesEndRef = useRef(null);
 
@@ -24,27 +20,19 @@ export default function Chat() {
   const handleSend = (e) => {
     e.preventDefault();
     if (!input.trim()) return;
-    
-    setMessages(prev => [...prev, { id: Date.now(), role: 'user', content: input }]);
+    sendMessage(input);
     setInput('');
-    
-    // Simulate Kiwi response
-    setTimeout(() => {
-      setMessages(prev => [...prev, { id: Date.now(), role: 'assistant', content: 'This is a simulated response. The full WebSocket integration is coming soon!' }]);
-    }, 1000);
   };
 
   return (
-    <div className="page-container" style={{ padding: 0, paddingBottom: 0 }}>
+    <div className="page-container" style={{ padding: 0, paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px))' }}>
       
       {/* Header */}
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderBottom: '1px solid var(--surface-border)', background: 'var(--background)', position: 'sticky', top: 0, zIndex: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ width: '36px', height: '36px', border: '1px solid var(--primary)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ color: 'var(--primary)', fontWeight: 'bold', fontSize: '14px' }}>^_^</span>
-          </div>
+          <KiwiMascot variant="icon" mood={mascotMood} size={40} />
           <h2 style={{ fontSize: '18px', fontWeight: 'bold' }}>Kiwi</h2>
-          <div style={{ width: '8px', height: '8px', background: 'var(--primary)', borderRadius: '50%' }}></div>
+          <div style={{ width: '8px', height: '8px', background: isConnected ? 'var(--primary)' : '#ff4d4d', borderRadius: '50%' }}></div>
         </div>
         <Link href="/settings" style={{ color: 'var(--text)' }}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
@@ -56,9 +44,7 @@ export default function Chat() {
         {messages.map((msg, idx) => (
           <div key={msg.id} style={{ display: 'flex', gap: '12px', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
             {msg.role === 'assistant' && (
-              <div style={{ width: '28px', height: '28px', border: '1px solid var(--primary)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, alignSelf: 'flex-start', marginTop: '4px' }}>
-                <span style={{ color: 'var(--primary)', fontSize: '10px', fontWeight: 'bold' }}>^_^</span>
-              </div>
+              <KiwiMascot variant="icon" mood={idx === messages.length - 1 ? mascotMood : "neutral"} size={28} className="flex-shrink-0 mt-1" />
             )}
             
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start', maxWidth: '75%' }}>

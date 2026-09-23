@@ -1,7 +1,21 @@
 'use client';
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
 
 export default function Settings() {
+  const [serverUrl, setServerUrl] = useState('');
+  const [apiToken, setApiToken] = useState('');
+
+  useEffect(() => {
+    setServerUrl(localStorage.getItem('kiwi_server_url') || '');
+    setApiToken(localStorage.getItem('kiwi_api_token') || '');
+  }, []);
+
+  const saveSettings = () => {
+    localStorage.setItem('kiwi_server_url', serverUrl);
+    localStorage.setItem('kiwi_api_token', apiToken);
+    alert('Settings saved!');
+  };
   return (
     <div className="page-container" style={{ padding: '16px', paddingBottom: '32px' }}>
       <header style={{ display: 'flex', alignItems: 'center', marginBottom: '32px', position: 'relative' }}>
@@ -10,6 +24,36 @@ export default function Settings() {
         </Link>
         <h2 style={{ fontSize: '18px', fontWeight: 'bold', width: '100%', textAlign: 'center' }}>Settings</h2>
       </header>
+
+      
+      {/* Connection */}
+      <div style={{ marginBottom: '32px' }}>
+        <h3 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '16px' }}>Connection</h3>
+        
+        <div style={{ background: 'var(--surface)', borderRadius: '16px', border: '1px solid var(--surface-border)', overflow: 'hidden', padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', color: 'var(--text-muted)', marginBottom: '8px' }}>Server URL</label>
+            <input 
+              type="text" 
+              value={serverUrl}
+              onChange={(e) => setServerUrl(e.target.value)}
+              placeholder="http://127.0.0.1:8080"
+              style={{ width: '100%', padding: '12px', background: 'var(--background)', border: '1px solid var(--surface-border)', borderRadius: '8px', color: 'var(--text)', fontSize: '15px' }}
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', color: 'var(--text-muted)', marginBottom: '8px' }}>API Token</label>
+            <input 
+              type="password" 
+              value={apiToken}
+              onChange={(e) => setApiToken(e.target.value)}
+              placeholder="kiwi_secret_token_dev"
+              style={{ width: '100%', padding: '12px', background: 'var(--background)', border: '1px solid var(--surface-border)', borderRadius: '8px', color: 'var(--text)', fontSize: '15px' }}
+            />
+          </div>
+          <button className="btn-primary" onClick={saveSettings} style={{ padding: '12px', marginTop: '8px' }}>Save Settings</button>
+        </div>
+      </div>
 
       {/* Appearance */}
       <div style={{ marginBottom: '32px' }}>

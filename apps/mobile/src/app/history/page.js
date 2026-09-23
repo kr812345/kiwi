@@ -1,4 +1,5 @@
 'use client';
+import KiwiMascot from '@/components/KiwiMascot';
 import Link from 'next/link';
 
 export default function History() {

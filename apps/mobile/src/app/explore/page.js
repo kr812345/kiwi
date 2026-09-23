@@ -1,4 +1,5 @@
 'use client';
+import KiwiMascot from '@/components/KiwiMascot';
 import Link from 'next/link';
 
 export default function Explore() {
@@ -6,9 +7,7 @@ export default function Explore() {
     <div className="page-container" style={{ padding: '16px' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ width: '40px', height: '40px', border: '1px solid var(--primary)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>^_^</span>
-          </div>
+          <KiwiMascot variant="icon" mood="happy" size={40} />
           <div>
             <h2 style={{ fontSize: '18px', fontWeight: 'bold' }}>Kiwi</h2>
             <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Explore ideas, prompts and more.</p>

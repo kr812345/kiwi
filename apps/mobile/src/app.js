@@ -356,12 +356,37 @@
     const trimmed = (text || '').trim();
     if (!trimmed) return;
 
-    if (!ws || ws.readyState !== WebSocket.OPEN) {
-      handleServerError('WebSocket not connected. Please check gateway connection.');
+    // Append User Message Bubble
+    const row = document.createElement('div');
+    row.className = 'message-row user';
+    const bubble = document.createElement('div');
+    bubble.className = 'message-bubble';
+    bubble.textContent = trimmed;
+    row.appendChild(bubble);
+    chatMessages.appendChild(row);
+    scrollToBottom();
+    
+    const emotion = detectEmotion(trimmed);
+    if (emotion) {
+      setAvatarState(emotion);
+    } else {
+      setAvatarState('thinking');
+    }
+
+    if (isFirstMessage) {
+      isFirstMessage = false;
+      setTimeout(() => {
+        setAvatarState('sleepy');
+        appendAssistantMessage('i am under development right now, can talk little now. So c u later.');
+      }, 1000);
       return;
     }
 
-    // Append User Message Bubble
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      console.error("WS NOT OPEN! ReadyState:", ws ? ws.readyState : "null");
+      handleServerError('WebSocket not connected! Check Vercel Env Vars: ' + serverUrl);
+      return;
+    }
     const row = document.createElement('div');
     row.className = 'message-row user';
     const bubble = document.createElement('div');

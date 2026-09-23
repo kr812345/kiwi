@@ -113,6 +113,17 @@ export function useKiwiChat(onMessageComplete = null) {
                setMascotMood('neutral'); // Reset after a while
             }, 3000);
           } 
+          else if (data.type === 'action') {
+            if (data.action === 'execute_link' && data.url) {
+              window.location.href = data.url;
+            } else if (data.action === 'notify' && data.message) {
+              if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+                new Notification('Kiwi', { body: data.message, icon: '/icon-192.png' });
+              } else {
+                alert("Kiwi says: " + data.message);
+              }
+            }
+          } 
           else if (data.type === 'error') {
             setIsTyping(false);
             setMascotMood('sad');
@@ -155,6 +166,11 @@ export function useKiwiChat(onMessageComplete = null) {
 
   const sendMessage = useCallback((text) => {
     if (!text.trim()) return;
+
+    // Request notification permissions on user gesture
+    if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
     
     // Add user message to UI
     setMessages(prev => [...prev, { id: Date.now().toString(), role: 'user', content: text }]);

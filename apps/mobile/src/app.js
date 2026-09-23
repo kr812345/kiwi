@@ -387,22 +387,6 @@
       handleServerError('WebSocket not connected! Check Vercel Env Vars: ' + serverUrl);
       return;
     }
-    const row = document.createElement('div');
-    row.className = 'message-row user';
-    const bubble = document.createElement('div');
-    bubble.className = 'message-bubble';
-    bubble.textContent = trimmed;
-    row.appendChild(bubble);
-    chatMessages.appendChild(row);
-    scrollToBottom();
-    
-    const emotion = detectEmotion(trimmed);
-    if (emotion) {
-      setAvatarState(emotion);
-    } else {
-      setAvatarState('thinking');
-    }
-
     
     if (isFirstMessage) {
       isFirstMessage = false;

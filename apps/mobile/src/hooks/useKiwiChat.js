@@ -45,7 +45,7 @@ export function useKiwiChat(onMessageComplete = null) {
     }
     
     // Convert http/https to ws/wss
-    const wsUrl = serverUrl.replace(/^http/, 'ws') + '/v1/chat';
+    const wsUrl = serverUrl.replace(/^http/, 'ws') + '/api/secure/ws';
     
     try {
       if (wsRef.current) {

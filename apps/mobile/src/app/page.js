@@ -4,14 +4,39 @@ import { useEffect, useState } from 'react';
 
 export default function Splash() {
   const [isStandalone, setIsStandalone] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
 
   useEffect(() => {
     // Check if running as PWA
     if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
       setIsStandalone(true);
     }
+
+    const handleBeforeInstallPrompt = (e) => {
+      // Prevent the mini-infobar from appearing on mobile
+      e.preventDefault();
+      // Stash the event so it can be triggered later.
+      setDeferredPrompt(e);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
   }, []);
 
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setDeferredPrompt(null);
+      }
+    } else {
+      alert('To install the app, please use your browser\'s "Add to Home Screen" feature.');
+    }
+  };
   return (
     <div className="page-container splash-container" style={{ alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
       
@@ -38,7 +63,7 @@ export default function Splash() {
       </div>
 
       <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '16px', paddingBottom: '32px' }}>
-        <Link href="/explore" style={{ textDecoration: 'none' }}>
+        <Link href="/home" style={{ textDecoration: 'none' }}>
           <button className="btn-primary">
             Continue 
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -49,7 +74,7 @@ export default function Splash() {
         </Link>
         
         {!isStandalone && (
-          <button className="btn-outline" onClick={() => alert('PWA installation flow coming soon!')}>
+          <button className="btn-outline" onClick={handleInstallClick}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
               <polyline points="7 10 12 15 17 10"></polyline>

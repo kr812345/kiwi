@@ -7,7 +7,7 @@ export default function BottomNav() {
 
   // Define navigation items based on design reference
   const navItems = [
-    { name: 'Home', path: '/', icon: (
+    { name: 'Home', path: '/home', icon: (
       <svg viewBox="0 0 24 24">
         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
         <polyline points="9 22 9 12 15 12 15 22"></polyline>
@@ -36,7 +36,7 @@ export default function BottomNav() {
   // Don't show bottom nav on splash or chat screen (optional, depends on design, but usually chat is full screen)
   // According to design refs, the bottom nav is visible on History, Explore, Profile, and maybe a Home dashboard.
   // Wait, the splash screen doesn't have it, but the main Chat doesn't have it either (it has an input bar).
-  if (pathname === '/chat' || pathname === '/splash') {
+  if (pathname === '/chat' || pathname === '/') {
     return null; 
   }
 

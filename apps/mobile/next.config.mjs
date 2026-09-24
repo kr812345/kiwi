@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  /* config options here */
+  env: {
+    NEXT_PUBLIC_SERVER_URL: 'https://api.kiwi.itskrishna.live',
+  },
 };
 
 export default nextConfig;

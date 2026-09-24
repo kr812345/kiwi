@@ -7,9 +7,17 @@ export default function Settings() {
   const [serverUrl, setServerUrl] = useState('');
   const [apiToken, setApiToken] = useState('');
 
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [pushSubJson, setPushSubJson] = useState('');
+
   useEffect(() => {
     setServerUrl(localStorage.getItem('kiwi_server_url') || '');
     setApiToken(localStorage.getItem('kiwi_api_token') || '');
+
+    // Check notification status on load
+    if ('Notification' in window) {
+      setNotificationsEnabled(Notification.permission === 'granted');
+    }
   }, []);
 
   const saveSettings = () => {
@@ -17,6 +25,59 @@ export default function Settings() {
     localStorage.setItem('kiwi_api_token', apiToken);
     alert('Settings saved!');
   };
+
+  const handleNotificationToggle = async () => {
+    if (!('Notification' in window)) {
+      alert('This browser does not support notifications.');
+      return;
+    }
+
+    if (Notification.permission === 'granted') {
+      testLocalNotification();
+      subscribeToPush();
+    } else if (Notification.permission !== 'denied') {
+      const permission = await Notification.requestPermission();
+      setNotificationsEnabled(permission === 'granted');
+      if (permission === 'granted') {
+        testLocalNotification();
+        subscribeToPush();
+      }
+    } else {
+      alert('Notifications are blocked by your browser settings. Please enable them in Brave settings.');
+    }
+  };
+
+  const subscribeToPush = async () => {
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      const sub = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: 'BCZuVPRs8LQgzEp0hX2DF77sLnMJvkbYAwlADS5aJ0BJo6duVgntIh1oVmZJni9jeqKDqWVpiyFdExTKzmns7fk'
+      });
+      setPushSubJson(JSON.stringify(sub, null, 2));
+    } catch (err) {
+      console.error('Failed to subscribe:', err);
+    }
+  };
+
+  const testLocalNotification = async () => {
+    if ('serviceWorker' in navigator) {
+      try {
+        const registration = await navigator.serviceWorker.register('/sw.js');
+        await navigator.serviceWorker.ready;
+        registration.showNotification('Kiwi', {
+          body: 'oyi krishna missing you, your kiwi.',
+          icon: '/icon-192.png',
+          vibrate: [200, 100, 200],
+        });
+      } catch (err) {
+        console.error('Service Worker registration failed:', err);
+      }
+    } else {
+      new Notification('Kiwi', { body: 'oyi krishna missing you, your kiwi.' });
+    }
+  };
+
   return (
     <div className="page-container" style={{ padding: '16px', paddingBottom: '32px' }}>
       <header style={{ display: 'flex', alignItems: 'center', marginBottom: '32px', position: 'relative' }}>
@@ -79,15 +140,25 @@ export default function Settings() {
             </div>
             <svg style={{ color: 'var(--text-muted)' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderBottom: '1px solid var(--surface-border)' }}>
+          <div onClick={handleNotificationToggle} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderBottom: '1px solid var(--surface-border)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <svg style={{ color: 'var(--text-muted)' }} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-              <span style={{ fontSize: '15px' }}>Notifications</span>
+              <span style={{ fontSize: '15px' }}>Notifications {notificationsEnabled ? '(Test)' : ''}</span>
             </div>
-            <div style={{ width: '44px', height: '24px', background: 'var(--primary)', borderRadius: '12px', position: 'relative' }}>
-              <div style={{ width: '20px', height: '20px', background: '#000', borderRadius: '50%', position: 'absolute', top: '2px', right: '2px' }}></div>
+            <div style={{ width: '44px', height: '24px', background: notificationsEnabled ? 'var(--primary)' : 'var(--surface-border)', borderRadius: '12px', position: 'relative', transition: 'background 0.3s' }}>
+              <div style={{ width: '20px', height: '20px', background: notificationsEnabled ? '#000' : '#fff', borderRadius: '50%', position: 'absolute', top: '2px', right: notificationsEnabled ? '2px' : 'auto', left: notificationsEnabled ? 'auto' : '2px', transition: 'all 0.3s' }}></div>
             </div>
           </div>
+          {pushSubJson && (
+            <div style={{ padding: '16px', borderBottom: '1px solid var(--surface-border)' }}>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>Push Subscription Data (Copy to test-push.js):</p>
+              <textarea 
+                readOnly 
+                value={pushSubJson}
+                style={{ width: '100%', height: '100px', background: 'var(--background)', color: 'var(--text)', border: '1px solid var(--surface-border)', borderRadius: '8px', padding: '8px', fontSize: '11px', fontFamily: 'monospace' }}
+              />
+            </div>
+          )}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <svg style={{ color: 'var(--text-muted)' }} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>

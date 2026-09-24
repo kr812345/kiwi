@@ -8,11 +8,10 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
-	
+
 	"kiwi/services/gateway/auth"
 	"kiwi/services/gateway/brain"
 	"kiwi/services/gateway/db"
@@ -140,25 +139,6 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// getStaticDir dynamically discovers the static files directory
-func getStaticDir() string {
-	if dir := os.Getenv("STATIC_DIR"); dir != "" {
-		return dir
-	}
-	candidates := []string{
-		"apps/mobile/public",
-		"../../apps/mobile/public",
-		"../apps/mobile/public",
-		"/root/kiwi/apps/mobile/public",
-	}
-	for _, c := range candidates {
-		if fi, err := os.Stat(c); err == nil && fi.IsDir() {
-			return c
-		}
-	}
-	return "apps/mobile/public"
-}
-
 // corsMiddleware adds standard CORS headers and handles preflight OPTIONS
 func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -175,62 +155,6 @@ func corsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// staticFileHandler serves PWA assets with cache control, manifest types, and SPA fallback
-func staticFileHandler(staticDir string) http.Handler {
-	fs := http.FileServer(http.Dir(staticDir))
-
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cleanPath := filepath.Clean(r.URL.Path)
-
-		// Safety guard: do not handle API or health routes
-		if strings.HasPrefix(cleanPath, "/api/") || cleanPath == "/health" {
-			http.NotFound(w, r)
-			return
-		}
-
-		// Service worker must never be aggressively cached
-		if strings.HasSuffix(cleanPath, "sw.js") {
-			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
-			w.Header().Set("Service-Worker-Allowed", "/")
-			w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
-		} else if strings.HasSuffix(cleanPath, "manifest.json") {
-			w.Header().Set("Content-Type", "application/manifest+json; charset=utf-8")
-		}
-
-		// Directly serve index.html for root and /index.html to avoid 301 redirects
-		if cleanPath == "/" || cleanPath == "/index.html" {
-			indexPath := filepath.Join(staticDir, "index.html")
-			data, err := os.ReadFile(indexPath)
-			if err == nil {
-				w.Header().Set("Content-Type", "text/html; charset=utf-8")
-				w.WriteHeader(http.StatusOK)
-				w.Write(data)
-				return
-			}
-		}
-
-		// Check if file exists on disk
-		fullPath := filepath.Join(staticDir, cleanPath)
-		info, err := os.Stat(fullPath)
-		if err != nil || info.IsDir() {
-			// If file does not exist and request does not look like a static asset,
-			// fallback to index.html for SPA client-side routing
-			ext := filepath.Ext(cleanPath)
-			if ext == "" {
-				indexPath := filepath.Join(staticDir, "index.html")
-				data, err := os.ReadFile(indexPath)
-				if err == nil {
-					w.Header().Set("Content-Type", "text/html; charset=utf-8")
-					w.WriteHeader(http.StatusOK)
-					w.Write(data)
-					return
-				}
-			}
-		}
-
-		fs.ServeHTTP(w, r)
-	})
-}
 
 func main() {
 	// Initialize Database
@@ -241,18 +165,18 @@ func main() {
 
 	// Initialize router
 	mux := http.NewServeMux()
-	
+
 	// API Router
 	apiMux := http.NewServeMux()
-	
+
 	// Public API routes
 	apiMux.HandleFunc("/health", healthCheckHandler)
-	
+
 	// Protected API routes
 	protectedMux := http.NewServeMux()
 	protectedMux.HandleFunc("/ping", pingHandler)
-	protectedMux.HandleFunc("/chat", chatHandler) // New Chat Endpoint!
-	
+	protectedMux.HandleFunc("/chat", chatHandler)
+
 	// Initialize WebSocket Hub
 	wsHub := ws.NewHub()
 	go wsHub.Run()
@@ -262,19 +186,19 @@ func main() {
 		ws.ServeWS(wsHub, w, r)
 	})
 
-	// Mount protected routes under /api/secure/ 
+	// Mount protected routes under /api/secure/
 	apiMux.Handle("/secure/", http.StripPrefix("/secure", auth.AuthMiddleware(protectedMux)))
 
 	// Mount API under /api/
 	mux.Handle("/api/", http.StripPrefix("/api", apiMux))
-	
-	// Keep a root public health check for infrastructure monitors
+
+	// Root public health check for infrastructure monitors
 	mux.HandleFunc("/health", healthCheckHandler)
 
-	// Mount PWA static file server at root "/"
-	staticDir := getStaticDir()
-	log.Printf("Serving static assets from: %s\n", staticDir)
-	mux.Handle("/", staticFileHandler(staticDir))
+	// Frontend is served by Vercel — return 404 for any unmatched routes
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "Not found", http.StatusNotFound)
+	})
 
 	port := os.Getenv("PORT")
 	if port == "" {

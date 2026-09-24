@@ -1,11 +1,13 @@
 # Caddy reverse proxy configuration
+# Frontend (PWA) is served by Vercel — this gateway handles API only.
 
 # Local development / HTTP only
 :80 {
-    reverse_proxy 127.0.0.1:8080
+	reverse_proxy 127.0.0.1:8080
 }
 
-# When ready for production with a domain, replace the above with:
-# kiwi.yourdomain.com {
+# Production — only the API subdomain points here.
+# kiwi.itskrishna.live is managed by Vercel DNS.
+# api.kiwi.itskrishna.live {
 #     reverse_proxy 127.0.0.1:8080
 # }

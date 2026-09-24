@@ -5,6 +5,7 @@ import { useKiwiChat } from '@/hooks/useKiwiChat';
 import KiwiMascot from '@/components/KiwiMascot';
 
 export default function Voice() {
+  const { sendMessage, mascotMood } = useKiwiChat();
   const [mood, setMood] = useState('listening');
   const [isListening, setIsListening] = useState(true);
   const [statusText, setStatusText] = useState("Talk to Kiwi. I'm here.");

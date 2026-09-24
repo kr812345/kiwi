@@ -4,27 +4,15 @@ import { useState, useEffect } from 'react';
 
 export default function Settings() {
   const router = useRouter();
-  const [serverUrl, setServerUrl] = useState('');
-  const [apiToken, setApiToken] = useState('');
-
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [pushSubJson, setPushSubJson] = useState('');
 
   useEffect(() => {
-    setServerUrl(localStorage.getItem('kiwi_server_url') || '');
-    setApiToken(localStorage.getItem('kiwi_api_token') || '');
-
     // Check notification status on load
     if ('Notification' in window) {
       setNotificationsEnabled(Notification.permission === 'granted');
     }
   }, []);
-
-  const saveSettings = () => {
-    localStorage.setItem('kiwi_server_url', serverUrl);
-    localStorage.setItem('kiwi_api_token', apiToken);
-    alert('Settings saved!');
-  };
 
   const handleNotificationToggle = async () => {
     if (!('Notification' in window)) {
@@ -87,21 +75,6 @@ export default function Settings() {
         <h2 style={{ fontSize: '18px', fontWeight: 'bold', width: '100%', textAlign: 'center' }}>Settings</h2>
       </header>
 
-      {/* Connection */}
-      <div style={{ marginBottom: '32px' }}>
-        <h3 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '16px' }}>Connection</h3>
-        <div style={{ background: 'var(--surface)', borderRadius: '16px', border: '1px solid var(--surface-border)', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div>
-            <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Server URL</label>
-            <input type="text" value={serverUrl} onChange={(e) => setServerUrl(e.target.value)} placeholder="https://api.kiwi.itskrishna.live" style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
-          </div>
-          <div>
-            <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>API Token</label>
-            <input type="password" value={apiToken} onChange={(e) => setApiToken(e.target.value)} placeholder="Secret Token" style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--background)', color: 'var(--text)' }} />
-          </div>
-          <button onClick={saveSettings} style={{ background: 'var(--primary)', color: '#000', padding: '10px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '4px' }}>Save Connection</button>
-        </div>
-      </div>
 
       {/* Appearance */}
       <div style={{ marginBottom: '32px' }}>

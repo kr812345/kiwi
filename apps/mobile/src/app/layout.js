@@ -5,8 +5,15 @@ export const metadata = {
   title: 'Kiwi AI Assistant',
   description: 'Personal AI Assistant powered by Synapse OS',
   manifest: '/manifest.json',
+};
+
+export const viewport = {
   themeColor: '#0D1117',
-  viewport: 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover',
+  width: 'device-width',
+  initialScale: 1.0,
+  maximumScale: 1.0,
+  userScalable: false,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({ children }) {

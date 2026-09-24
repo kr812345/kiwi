@@ -39,13 +39,9 @@ export function useKiwiChat(onMessageComplete = null) {
   const currentStreamingId = useRef(null);
 
   const connect = useCallback(() => {
-    let serverUrl = localStorage.getItem('kiwi_server_url') || '';
+    let serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || localStorage.getItem('kiwi_server_url') || '';
     if (!serverUrl || serverUrl === 'null' || serverUrl.startsWith('file:')) {
-      if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-        serverUrl = window.location.origin;
-      } else {
-        serverUrl = 'http://127.0.0.1:8080';
-      }
+      serverUrl = 'http://127.0.0.1:8080';
     }
     
     // Convert http/https to ws/wss

@@ -1,6 +1,6 @@
 # Kiwi — Personal AI System
 
-> **Vision:** Build a personal AI system (JARVIS-like) that I own and continuously improve — accessible from my phone, connected to my computer and services, capable of remembering context, using tools, executing tasks, and eventually interacting with the physical world.
+> **Vision:** Build a personal AI system that I own and continuously improve — accessible from my phone, connected to my computer and services, capable of remembering context, using tools, executing tasks, and eventually interacting with the physical world.
 
 ---
 

@@ -10,11 +10,12 @@ Connects to ws://127.0.0.1:8080/api/secure/ws and validates:
 
 import asyncio
 import json
+import os
 import sys
 import websockets
 
-GATEWAY_WS = "ws://127.0.0.1:8080/api/secure/ws"
-API_TOKEN = "kiwi_secret_token_dev"
+GATEWAY_WS = os.environ.get("GATEWAY_WS", "ws://127.0.0.1:8080/api/secure/ws")
+API_TOKEN = os.environ.get("API_TOKEN", "kiwi_secret_token_dev")
 
 
 async def test_bearer_auth_streaming():

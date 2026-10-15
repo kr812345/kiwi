@@ -1,21 +1,28 @@
 'use client';
-import KiwiMascot from '@/components/KiwiMascot';
-import Link from 'next/link';
-import { useState, useRef, useEffect } from 'react';
-import { useKiwiChat } from '@/hooks/useKiwiChat';
 
-export default function Chat() {
-  const { messages, sendMessage, isConnected, isTyping, mascotMood } = useKiwiChat();
+import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import KiwiMascot from '@/components/KiwiMascot';
+import BottomNav from '@/components/BottomNav';
+import { useKiwiChat } from '@/hooks/useKiwiChat';
+import { Send, Mic, Sparkles, Code, FileText, Terminal, Zap } from 'lucide-react';
+
+export default function ChatScreen() {
+  const router = useRouter();
+  const { messages, isConnected, isTyping, lastTiming, sendMessage } = useKiwiChat();
   const [input, setInput] = useState('');
   const messagesEndRef = useRef(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  const suggestions = [
+    { icon: Sparkles, text: 'Ping timing check', prompt: 'ping timing check' },
+    { icon: Code, text: 'Debug a React hook', prompt: 'help me debug a react hook' },
+    { icon: FileText, text: 'System status', prompt: 'how are you feeling today kiwi?' },
+    { icon: Terminal, text: 'Write a bash script', prompt: 'write a bash script to check open ports' },
+  ];
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isTyping]);
 
   const handleSend = (e) => {
     e.preventDefault();
@@ -25,75 +32,260 @@ export default function Chat() {
   };
 
   return (
-    <div className="page-container" style={{ padding: 0, paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px))' }}>
-      
-      {/* Header */}
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderBottom: '1px solid var(--surface-border)', background: 'var(--background)', position: 'sticky', top: 0, zIndex: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <KiwiMascot variant="icon" mood={mascotMood} size={40} />
-          <h2 style={{ fontSize: '18px', fontWeight: 'bold' }}>Kiwi</h2>
-          <div style={{ width: '8px', height: '8px', background: isConnected ? 'var(--primary)' : '#ff4d4d', borderRadius: '50%' }}></div>
-        </div>
-        <Link href="/settings" style={{ color: 'var(--text)' }}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-        </Link>
-      </header>
-
-      {/* Messages */}
-      <div style={{ flex: 1, padding: '16px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        {messages.map((msg, idx) => (
-          <div key={msg.id} style={{ display: 'flex', gap: '12px', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
-            {msg.role === 'assistant' && (
-              <KiwiMascot variant="icon" mood={idx === messages.length - 1 ? mascotMood : "neutral"} size={28} className="flex-shrink-0 mt-1" />
-            )}
-            
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start', maxWidth: '75%' }}>
-              <div style={{ 
-                background: msg.role === 'user' ? 'rgba(139, 233, 66, 0.1)' : 'var(--surface)', 
-                color: 'var(--text)', 
-                padding: '12px 16px', 
-                borderRadius: '16px', 
-                borderBottomRightRadius: msg.role === 'user' ? '4px' : '16px',
-                borderBottomLeftRadius: msg.role === 'assistant' ? '4px' : '16px',
-                border: msg.role === 'user' ? '1px solid rgba(139, 233, 66, 0.2)' : '1px solid var(--surface-border)',
-                fontSize: '15px',
-                lineHeight: '1.4'
-              }}>
-                {msg.content}
-              </div>
-              <span style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                9:41 AM {msg.role === 'user' && <span style={{ color: 'var(--primary)' }}>✓✓</span>}
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: 'var(--bg-primary)' }}>
+      {/* Top App Bar */}
+      <header
+        className="glass"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '14px 20px',
+          borderBottom: '1px solid var(--border-subtle)',
+          zIndex: 20,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 38, height: 38 }}>
+            <KiwiMascot size={38} state={isTyping ? 'thinking' : 'idle'} />
+          </div>
+          <div>
+            <h1 style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.3px', color: 'var(--text-primary)' }}>
+              Kiwi AI
+            </h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span
+                style={{
+                  width: 7,
+                  height: 7,
+                  borderRadius: '50%',
+                  background: isConnected ? 'var(--kiwi-green)' : '#EF4444',
+                  boxShadow: isConnected ? '0 0 8px var(--kiwi-green)' : 'none',
+                }}
+              />
+              <span style={{ fontSize: 11, color: 'var(--text-secondary)', fontWeight: 500 }}>
+                {isConnected ? 'Synapse OS Online' : 'Reconnecting...'}
               </span>
             </div>
           </div>
-        ))}
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Input */}
-      <div style={{ padding: '12px 16px', background: 'var(--background)', borderTop: '1px solid var(--surface-border)' }}>
-        <form onSubmit={handleSend} style={{ display: 'flex', alignItems: 'center', background: 'var(--surface)', borderRadius: '100px', border: '1px solid var(--surface-border)', padding: '6px' }}>
-          <button type="button" style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', padding: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
-          </button>
-          
-          <input 
-            type="text" 
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Message Kiwi..." 
-            style={{ flex: 1, background: 'transparent', border: 'none', color: 'var(--text)', padding: '8px 4px', fontSize: '15px', outline: 'none' }} 
-          />
-          
-          <button type="submit" style={{ background: 'var(--primary)', color: '#000', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s', opacity: input.trim() ? 1 : 0.5 }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-          </button>
-        </form>
-        <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '10px', color: 'var(--text-muted)' }}>
-          
         </div>
-      </div>
 
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {lastTiming && (
+            <div
+              title={`TTFT: ${lastTiming.ttftMs}ms | Total: ${lastTiming.totalMs}ms | Tokens: ${lastTiming.tokenCount}`}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                padding: '6px 10px',
+                borderRadius: 'var(--radius-full)',
+                background: 'var(--bg-elevated)',
+                border: '1px solid var(--border-subtle)',
+                fontSize: 11,
+                color: 'var(--kiwi-green)',
+                fontWeight: 600,
+              }}
+            >
+              <Zap size={12} />
+              <span>{lastTiming.ttftMs}ms TTFT</span>
+            </div>
+          )}
+
+          <button
+            onClick={() => router.push('/voice')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '8px 14px',
+              borderRadius: 'var(--radius-full)',
+              background: 'var(--kiwi-green-soft)',
+              border: '1px solid var(--border-accent)',
+              color: 'var(--kiwi-green)',
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            <Mic size={14} />
+            <span>Voice</span>
+          </button>
+        </div>
+      </header>
+
+      {/* Chat Messages Area */}
+      <main
+        style={{
+          flex: 1,
+          overflowY: 'auto',
+          padding: '20px 16px 160px 16px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 16,
+        }}
+      >
+        {/* Quick Suggestion Chips (Shown when conversation is fresh) */}
+        {messages.length <= 1 && (
+          <div style={{ marginBottom: 8 }}>
+            <p
+              style={{
+                fontSize: 12,
+                color: 'var(--text-muted)',
+                marginBottom: 10,
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+              }}
+            >
+              Suggested Actions
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              {suggestions.map((item, idx) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => sendMessage(item.prompt || item.text)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      padding: '12px',
+                      background: 'var(--bg-card)',
+                      border: '1px solid var(--border-subtle)',
+                      borderRadius: 'var(--radius-md)',
+                      color: 'var(--text-primary)',
+                      fontSize: 12,
+                      fontWeight: 500,
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    <Icon size={15} color="var(--kiwi-green)" style={{ flexShrink: 0 }} />
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {item.text}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Message Bubbles */}
+        {messages.map((msg, idx) => {
+          const isUser = msg.role === 'user';
+          const isThinkingBubble = !isUser && !msg.content && isTyping;
+          return (
+            <div
+              key={idx}
+              className="animate-fade-up"
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: isUser ? 'flex-end' : 'flex-start',
+                gap: 4,
+              }}
+            >
+              <div
+                style={{
+                  maxWidth: '82%',
+                  padding: '13px 16px',
+                  borderRadius: isUser ? '20px 20px 4px 20px' : '20px 20px 20px 4px',
+                  background: isUser
+                    ? 'linear-gradient(135deg, var(--kiwi-green), var(--kiwi-green-dark))'
+                    : 'var(--bg-card)',
+                  color: isUser ? '#05150D' : 'var(--text-primary)',
+                  fontWeight: isUser ? 600 : 400,
+                  fontSize: 14,
+                  lineHeight: 1.55,
+                  border: isUser ? 'none' : '1px solid var(--border-subtle)',
+                  boxShadow: isUser ? '0 4px 16px rgba(16, 185, 129, 0.2)' : 'var(--shadow-card)',
+                  wordBreak: 'break-word',
+                  whiteSpace: 'pre-wrap',
+                }}
+              >
+                {isThinkingBubble ? (
+                  <span style={{ color: 'var(--kiwi-green)', fontSize: 13, fontStyle: 'italic' }}>
+                    [ ^ _ ^ ] kiwi is thinking...
+                  </span>
+                ) : (
+                  msg.content
+                )}
+              </div>
+              <span style={{ fontSize: 10, color: 'var(--text-muted)', padding: '0 4px' }}>
+                {isUser ? 'You' : 'Kiwi'} • {msg.timestamp || 'now'}
+                {!isUser && msg.timing
+                  ? ` • TTFT ${msg.timing.ttftMs}ms · ${msg.timing.totalMs}ms (${msg.timing.tokenCount} tok)`
+                  : ''}
+              </span>
+            </div>
+          );
+        })}
+
+        <div ref={messagesEndRef} />
+      </main>
+
+      {/* Input Bar Above Bottom Nav */}
+      <form
+        onSubmit={handleSend}
+        style={{
+          position: 'fixed',
+          bottom: 84,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: 'calc(100% - 32px)',
+          maxWidth: 448,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '8px 10px 8px 16px',
+          background: 'rgba(20, 29, 25, 0.92)',
+          backdropFilter: 'blur(16px)',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: 'var(--radius-full)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.45)',
+          zIndex: 30,
+        }}
+      >
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Message Kiwi..."
+          style={{
+            flex: 1,
+            background: 'transparent',
+            border: 'none',
+            outline: 'none',
+            color: 'var(--text-primary)',
+            fontSize: 14,
+          }}
+        />
+        <button
+          type="submit"
+          disabled={!input.trim()}
+          style={{
+            width: 38,
+            height: 38,
+            borderRadius: '50%',
+            border: 'none',
+            background: input.trim() ? 'var(--kiwi-green)' : 'var(--bg-elevated)',
+            color: input.trim() ? '#04120B' : 'var(--text-muted)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: input.trim() ? 'pointer' : 'default',
+            transition: 'all 0.2s ease',
+          }}
+        >
+          <Send size={17} />
+        </button>
+      </form>
+
+      <BottomNav />
     </div>
   );
 }

@@ -1,187 +1,450 @@
 'use client';
-import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
 
-export default function Settings() {
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { ArrowLeft, Volume2, Bell, Cpu, Shield, Trash2, ChevronRight, Server, Activity, Check } from 'lucide-react';
+import { resolveKiwiConnectionConfig } from '@/hooks/useKiwiChat';
+
+export default function SettingsScreen() {
   const router = useRouter();
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
-  const [pushSubJson, setPushSubJson] = useState('');
+  const [voiceOutput, setVoiceOutput] = useState(true);
+  const [notifications, setNotifications] = useState(true);
+  const [haptics, setHaptics] = useState(true);
+  const [serverUrl, setServerUrl] = useState('');
+  const [apiToken, setApiToken] = useState('');
+  const [savedNotice, setSavedNotice] = useState(false);
+  const [pingResult, setPingResult] = useState(null);
+  const [isPinging, setIsPinging] = useState(false);
 
   useEffect(() => {
-    // Check notification status on load
-    if ('Notification' in window) {
-      setNotificationsEnabled(Notification.permission === 'granted');
-    }
+    const cfg = resolveKiwiConnectionConfig();
+    setServerUrl(cfg.serverUrl);
+    setApiToken(cfg.token);
   }, []);
 
-  const handleNotificationToggle = async () => {
-    if (!('Notification' in window)) {
-      alert('This browser does not support notifications.');
-      return;
+  const handleSaveConnection = (customUrl) => {
+    const targetUrl = (typeof customUrl === 'string' ? customUrl : serverUrl).trim().replace(/\/+$/, '');
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('kiwi_server_url', targetUrl);
+      window.localStorage.setItem('kiwi_api_token', apiToken.trim());
     }
-
-    if (Notification.permission === 'granted') {
-      testLocalNotification();
-      subscribeToPush();
-    } else if (Notification.permission !== 'denied') {
-      const permission = await Notification.requestPermission();
-      setNotificationsEnabled(permission === 'granted');
-      if (permission === 'granted') {
-        testLocalNotification();
-        subscribeToPush();
-      }
-    } else {
-      alert('Notifications are blocked by your browser settings. Please enable them in Brave settings.');
-    }
+    setServerUrl(targetUrl);
+    setSavedNotice(true);
+    setTimeout(() => setSavedNotice(false), 2000);
   };
 
-  const subscribeToPush = async () => {
+  const handleCheckTiming = async () => {
+    setIsPinging(true);
+    setPingResult(null);
+    const targetUrl = serverUrl.trim().replace(/\/+$/, '');
+    const token = apiToken.trim();
     try {
-      const registration = await navigator.serviceWorker.ready;
-      const sub = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: 'BCZuVPRs8LQgzEp0hX2DF77sLnMJvkbYAwlADS5aJ0BJo6duVgntIh1oVmZJni9jeqKDqWVpiyFdExTKzmns7fk'
+      const t0 = performance.now();
+      const healthRes = await fetch(`${targetUrl}/api/health`);
+      const healthMs = Math.round(performance.now() - t0);
+      const healthData = await healthRes.json();
+
+      const t1 = performance.now();
+      const chatRes = await fetch(`${targetUrl}/api/secure/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          message: 'ping timing check',
+          conversation_id: 'settings-timing-check',
+        }),
       });
-      setPushSubJson(JSON.stringify(sub, null, 2));
+      const chatMs = Math.round(performance.now() - t1);
+      const chatData = chatRes.ok ? await chatRes.json() : null;
+
+      setPingResult({
+        ok: healthRes.ok && chatRes.ok,
+        healthMs,
+        chatMs,
+        brainStatus: healthData?.brain || 'unknown',
+        replyPreview: chatData?.response ? chatData.response.slice(0, 70) + '...' : `HTTP ${chatRes.status}`,
+      });
     } catch (err) {
-      console.error('Failed to subscribe:', err);
+      setPingResult({
+        ok: false,
+        error: err.message,
+      });
+    } finally {
+      setIsPinging(false);
     }
   };
 
-  const testLocalNotification = async () => {
-    if ('serviceWorker' in navigator) {
-      try {
-        const registration = await navigator.serviceWorker.register('/sw.js');
-        await navigator.serviceWorker.ready;
-        registration.showNotification('Kiwi', {
-          body: 'oyi krishna missing you, your kiwi.',
-          icon: '/icon-192.png',
-          vibrate: [200, 100, 200],
-        });
-      } catch (err) {
-        console.error('Service Worker registration failed:', err);
-      }
-    } else {
-      new Notification('Kiwi', { body: 'oyi krishna missing you, your kiwi.' });
-    }
-  };
+  const Toggle = ({ active, onClick }) => (
+    <button
+      onClick={onClick}
+      style={{
+        width: 46,
+        height: 26,
+        borderRadius: 99,
+        padding: 3,
+        border: 'none',
+        background: active ? 'var(--kiwi-green)' : 'var(--bg-elevated)',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: active ? 'flex-end' : 'flex-start',
+        transition: 'all 0.25s ease',
+      }}
+    >
+      <div
+        style={{
+          width: 20,
+          height: 20,
+          borderRadius: '50%',
+          background: active ? '#04120B' : 'var(--text-secondary)',
+          transition: 'all 0.25s ease',
+        }}
+      />
+    </button>
+  );
 
   return (
-    <div className="page-container" style={{ padding: '16px', paddingBottom: '32px' }}>
-      <header style={{ display: 'flex', alignItems: 'center', marginBottom: '32px', position: 'relative' }}>
-        <button onClick={() => router.back()} style={{ background: 'none', border: 'none', position: 'absolute', left: 0, color: 'var(--text)', cursor: 'pointer', padding: 0 }}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: 'var(--bg-primary)' }}>
+      {/* Header */}
+      <header
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 14,
+          padding: '20px',
+          borderBottom: '1px solid var(--border-subtle)',
+        }}
+      >
+        <button
+          onClick={() => router.back()}
+          style={{
+            width: 38,
+            height: 38,
+            borderRadius: '50%',
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-subtle)',
+            color: 'var(--text-primary)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+          }}
+        >
+          <ArrowLeft size={18} />
         </button>
-        <h2 style={{ fontSize: '18px', fontWeight: 'bold', width: '100%', textAlign: 'center' }}>Settings</h2>
+        <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>Settings</h1>
       </header>
 
+      <main style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+        {/* Gateway & Timing Section */}
+        <section>
+          <p
+            style={{
+              fontSize: 12,
+              fontWeight: 600,
+              color: 'var(--text-muted)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.6px',
+              marginBottom: 10,
+            }}
+          >
+            Gateway Connection & Timing
+          </p>
+          <div
+            style={{
+              background: 'var(--bg-card)',
+              borderRadius: 'var(--radius-lg)',
+              border: '1px solid var(--border-subtle)',
+              padding: 16,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 12,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Server size={18} color="var(--kiwi-green)" />
+              <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>Backend Endpoint</span>
+            </div>
 
-      {/* Appearance */}
-      <div style={{ marginBottom: '32px' }}>
-        <h3 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '16px' }}>Appearance</h3>
-        
-        <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
-          <div style={{ flex: 1, background: 'var(--surface)', border: '1px solid var(--primary)', borderRadius: '12px', padding: '16px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', position: 'relative' }}>
-            <div style={{ position: 'absolute', top: '8px', right: '8px', background: 'var(--primary)', borderRadius: '50%', width: '16px', height: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                type="button"
+                onClick={() => handleSaveConnection('http://127.0.0.1:8080')}
+                style={{
+                  flex: 1,
+                  padding: '8px 10px',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--border-subtle)',
+                  background: serverUrl.includes('127.0.0.1') || serverUrl.includes('localhost') ? 'var(--kiwi-green-soft)' : 'var(--bg-elevated)',
+                  color: serverUrl.includes('127.0.0.1') || serverUrl.includes('localhost') ? 'var(--kiwi-green)' : 'var(--text-secondary)',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Local (:8080)
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSaveConnection('https://api.kiwi.itskrishna.live')}
+                style={{
+                  flex: 1,
+                  padding: '8px 10px',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--border-subtle)',
+                  background: serverUrl.includes('itskrishna.live') ? 'var(--kiwi-green-soft)' : 'var(--bg-elevated)',
+                  color: serverUrl.includes('itskrishna.live') ? 'var(--kiwi-green)' : 'var(--text-secondary)',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Production
+              </button>
             </div>
-            <svg style={{ color: 'var(--primary)' }} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-            <span style={{ fontSize: '12px', fontWeight: '500' }}>Dark</span>
-          </div>
-          <div style={{ flex: 1, background: 'var(--background)', border: '1px solid var(--surface-border)', borderRadius: '12px', padding: '16px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-            <svg style={{ color: 'var(--text-muted)' }} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-            <span style={{ fontSize: '12px', fontWeight: '500', color: 'var(--text-muted)' }}>Light</span>
-          </div>
-          <div style={{ flex: 1, background: 'var(--background)', border: '1px solid var(--surface-border)', borderRadius: '12px', padding: '16px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-            <svg style={{ color: 'var(--text-muted)' }} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
-            <span style={{ fontSize: '12px', fontWeight: '500', color: 'var(--text-muted)' }}>System</span>
-          </div>
-        </div>
 
-        <div style={{ background: 'var(--surface)', borderRadius: '16px', border: '1px solid var(--surface-border)', overflow: 'hidden' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderBottom: '1px solid var(--surface-border)' }}>
-            <span style={{ fontSize: '15px' }}>Accent Color</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'var(--primary)' }}></div>
-              <span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Kiwi Green</span>
-              <svg style={{ color: 'var(--text-muted)' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
-            </div>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px' }}>
-            <span style={{ fontSize: '15px' }}>Use Compact Mode</span>
-            <div style={{ width: '44px', height: '24px', background: 'var(--surface-border)', borderRadius: '12px', position: 'relative' }}>
-              <div style={{ width: '20px', height: '20px', background: '#fff', borderRadius: '50%', position: 'absolute', top: '2px', left: '2px' }}></div>
-            </div>
-          </div>
-        </div>
-      </div>
+            <input
+              type="text"
+              value={serverUrl}
+              onChange={(e) => setServerUrl(e.target.value)}
+              placeholder="http://127.0.0.1:8080"
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--border-subtle)',
+                background: 'var(--bg-elevated)',
+                color: 'var(--text-primary)',
+                fontSize: 13,
+              }}
+            />
 
-      {/* App */}
-      <div style={{ marginBottom: '32px' }}>
-        <h3 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '16px' }}>App</h3>
-        
-        <div style={{ background: 'var(--surface)', borderRadius: '16px', border: '1px solid var(--surface-border)', overflow: 'hidden' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderBottom: '1px solid var(--surface-border)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <svg style={{ color: 'var(--text-muted)' }} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-              <span style={{ fontSize: '15px' }}>Install as PWA</span>
-            </div>
-            <svg style={{ color: 'var(--text-muted)' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
-          </div>
-          <div onClick={handleNotificationToggle} style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderBottom: '1px solid var(--surface-border)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <svg style={{ color: 'var(--text-muted)' }} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-              <span style={{ fontSize: '15px' }}>Notifications {notificationsEnabled ? '(Test)' : ''}</span>
-            </div>
-            <div style={{ width: '44px', height: '24px', background: notificationsEnabled ? 'var(--primary)' : 'var(--surface-border)', borderRadius: '12px', position: 'relative', transition: 'background 0.3s' }}>
-              <div style={{ width: '20px', height: '20px', background: notificationsEnabled ? '#000' : '#fff', borderRadius: '50%', position: 'absolute', top: '2px', right: notificationsEnabled ? '2px' : 'auto', left: notificationsEnabled ? 'auto' : '2px', transition: 'all 0.3s' }}></div>
-            </div>
-          </div>
-          {pushSubJson && (
-            <div style={{ padding: '16px', borderBottom: '1px solid var(--surface-border)' }}>
-              <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>Push Subscription Data (Copy to test-push.js):</p>
-              <textarea 
-                readOnly 
-                value={pushSubJson}
-                style={{ width: '100%', height: '100px', background: 'var(--background)', color: 'var(--text)', border: '1px solid var(--surface-border)', borderRadius: '8px', padding: '8px', fontSize: '11px', fontFamily: 'monospace' }}
-              />
-            </div>
-          )}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <svg style={{ color: 'var(--text-muted)' }} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-              <span style={{ fontSize: '15px' }}>Auto clear old chats</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>30 days</span>
-              <svg style={{ color: 'var(--text-muted)' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
-            </div>
-          </div>
-        </div>
-      </div>
+            <input
+              type="password"
+              value={apiToken}
+              onChange={(e) => setApiToken(e.target.value)}
+              placeholder="Bearer API Token"
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--border-subtle)',
+                background: 'var(--bg-elevated)',
+                color: 'var(--text-primary)',
+                fontSize: 13,
+              }}
+            />
 
-      {/* About */}
-      <div style={{ marginBottom: '32px' }}>
-        <h3 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '16px' }}>About</h3>
-        
-        <div style={{ background: 'var(--surface)', borderRadius: '16px', border: '1px solid var(--surface-border)', overflow: 'hidden' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderBottom: '1px solid var(--surface-border)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <svg style={{ color: 'var(--text-muted)' }} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-              <span style={{ fontSize: '15px' }}>Version</span>
-            </div>
-            <span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>v0.1.0</span>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <svg style={{ color: 'var(--text-muted)' }} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-              <span style={{ fontSize: '15px' }}>Synapse OS Stream</span>
-            </div>
-            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--primary)' }}></div>
-          </div>
-        </div>
-      </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                type="button"
+                onClick={() => handleSaveConnection()}
+                style={{
+                  flex: 1,
+                  padding: '10px 14px',
+                  borderRadius: 'var(--radius-md)',
+                  border: 'none',
+                  background: 'var(--kiwi-green)',
+                  color: '#04120B',
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                }}
+              >
+                {savedNotice ? <Check size={15} /> : null}
+                <span>{savedNotice ? 'Saved!' : 'Save Config'}</span>
+              </button>
 
+              <button
+                type="button"
+                onClick={handleCheckTiming}
+                disabled={isPinging}
+                style={{
+                  flex: 1,
+                  padding: '10px 14px',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--border-accent)',
+                  background: 'var(--kiwi-green-soft)',
+                  color: 'var(--kiwi-green)',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                }}
+              >
+                <Activity size={15} />
+                <span>{isPinging ? 'Testing...' : 'Check Timing'}</span>
+              </button>
+            </div>
+
+            {pingResult && (
+              <div
+                style={{
+                  padding: '10px 12px',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'var(--bg-elevated)',
+                  border: `1px solid ${pingResult.ok ? 'var(--kiwi-green)' : '#EF4444'}`,
+                  fontSize: 12,
+                  color: 'var(--text-primary)',
+                  lineHeight: 1.5,
+                }}
+              >
+                {pingResult.error ? (
+                  <span style={{ color: '#EF4444' }}>Connection Error: {pingResult.error}</span>
+                ) : (
+                  <>
+                    <div>
+                      <strong>Gateway Health:</strong> {pingResult.healthMs}ms ({pingResult.brainStatus})
+                    </div>
+                    <div>
+                      <strong>Round-Trip Chat:</strong> {pingResult.chatMs}ms
+                    </div>
+                    <div style={{ color: 'var(--text-secondary)', marginTop: 4 }}>{pingResult.replyPreview}</div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Preferences Section */}
+        <section>
+          <p
+            style={{
+              fontSize: 12,
+              fontWeight: 600,
+              color: 'var(--text-muted)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.6px',
+              marginBottom: 10,
+            }}
+          >
+            Preferences
+          </p>
+          <div
+            style={{
+              background: 'var(--bg-card)',
+              borderRadius: 'var(--radius-lg)',
+              border: '1px solid var(--border-subtle)',
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '16px',
+                borderBottom: '1px solid var(--border-subtle)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <Volume2 size={18} color="var(--kiwi-green)" />
+                <span style={{ fontSize: 14, fontWeight: 500 }}>Voice Responses (TTS)</span>
+              </div>
+              <Toggle active={voiceOutput} onClick={() => setVoiceOutput(!voiceOutput)} />
+            </div>
+
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '16px',
+                borderBottom: '1px solid var(--border-subtle)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <Bell size={18} color="var(--kiwi-green)" />
+                <span style={{ fontSize: 14, fontWeight: 500 }}>Push Notifications</span>
+              </div>
+              <Toggle active={notifications} onClick={() => setNotifications(!notifications)} />
+            </div>
+
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '16px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <Cpu size={18} color="var(--kiwi-green)" />
+                <span style={{ fontSize: 14, fontWeight: 500 }}>Haptic Feedback</span>
+              </div>
+              <Toggle active={haptics} onClick={() => setHaptics(!haptics)} />
+            </div>
+          </div>
+        </section>
+
+        {/* AI Engine Config */}
+        <section>
+          <p
+            style={{
+              fontSize: 12,
+              fontWeight: 600,
+              color: 'var(--text-muted)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.6px',
+              marginBottom: 10,
+            }}
+          >
+            Synapse OS Engine
+          </p>
+          <div
+            style={{
+              background: 'var(--bg-card)',
+              borderRadius: 'var(--radius-lg)',
+              border: '1px solid var(--border-subtle)',
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '16px',
+                borderBottom: '1px solid var(--border-subtle)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <Shield size={18} color="var(--kiwi-green)" />
+                <div>
+                  <p style={{ fontSize: 14, fontWeight: 500 }}>Primary Brain Model</p>
+                  <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Gemini 2.5 Flash (Low Latency)</p>
+                </div>
+              </div>
+              <ChevronRight size={18} color="var(--text-muted)" />
+            </div>
+
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '16px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <Trash2 size={18} color="#EF4444" />
+                <span style={{ fontSize: 14, fontWeight: 500, color: '#EF4444' }}>Clear Conversation Memory</span>
+              </div>
+              <ChevronRight size={18} color="var(--text-muted)" />
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
   );
 }

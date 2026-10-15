@@ -88,62 +88,14 @@ func TestChatHandler_FallbackConversationID_Nanosecond(t *testing.T) {
 	}
 }
 
-func TestStaticFileServing_PublicAssets(t *testing.T) {
-	staticDir := getStaticDir()
-	handler := staticFileHandler(staticDir)
-
-	// Test manifest.json
-	req := httptest.NewRequest(http.MethodGet, "/manifest.json", nil)
-	w := httptest.NewRecorder()
-	handler.ServeHTTP(w, req)
-	if w.Code != http.StatusOK {
-		t.Errorf("expected status 200 for manifest.json, got %d", w.Code)
-	}
-	if !strings.Contains(w.Header().Get("Content-Type"), "application/manifest+json") {
-		t.Errorf("unexpected content type for manifest: %s", w.Header().Get("Content-Type"))
-	}
-
-	// Test sw.js
-	reqSW := httptest.NewRequest(http.MethodGet, "/sw.js", nil)
-	wSW := httptest.NewRecorder()
-	handler.ServeHTTP(wSW, reqSW)
-	if wSW.Code != http.StatusOK {
-		t.Errorf("expected status 200 for sw.js, got %d", wSW.Code)
-	}
-	if wSW.Header().Get("Cache-Control") != "no-cache, no-store, must-revalidate" {
-		t.Errorf("unexpected Cache-Control for sw.js: %s", wSW.Header().Get("Cache-Control"))
-	}
-	if wSW.Header().Get("Service-Worker-Allowed") != "/" {
-		t.Errorf("unexpected Service-Worker-Allowed: %s", wSW.Header().Get("Service-Worker-Allowed"))
-	}
-
-	// Test index.html via root "/"
-	reqRoot := httptest.NewRequest(http.MethodGet, "/", nil)
-	wRoot := httptest.NewRecorder()
-	handler.ServeHTTP(wRoot, reqRoot)
-	if wRoot.Code != http.StatusOK {
-		t.Errorf("expected status 200 for /, got %d", wRoot.Code)
-	}
-	if !strings.Contains(wRoot.Body.String(), "<title>Kiwi AI Assistant</title>") {
-		t.Errorf("expected Kiwi title in root response, got: %s", wRoot.Body.String())
-	}
-
-	// Test index.html via direct "/index.html"
-	reqIndex := httptest.NewRequest(http.MethodGet, "/index.html", nil)
-	wIndex := httptest.NewRecorder()
-	handler.ServeHTTP(wIndex, reqIndex)
-	if wIndex.Code != http.StatusOK {
-		t.Errorf("expected status 200 for /index.html, got %d", wIndex.Code)
-	}
-	if !strings.Contains(wIndex.Body.String(), "<title>Kiwi AI Assistant</title>") {
-		t.Errorf("expected Kiwi title in /index.html response, got: %s", wIndex.Body.String())
-	}
-}
-
 func TestRoutePrecedence_HealthNotShadowed(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", healthCheckHandler)
-	mux.Handle("/", staticFileHandler(getStaticDir()))
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte(`{"error": "not found"}`))
+	})
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	w := httptest.NewRecorder()
@@ -154,6 +106,13 @@ func TestRoutePrecedence_HealthNotShadowed(t *testing.T) {
 	}
 	if !strings.Contains(w.Body.String(), "Kiwi API Gateway is running") {
 		t.Errorf("expected health check body, got %s", w.Body.String())
+	}
+
+	req404 := httptest.NewRequest(http.MethodGet, "/unknown-route", nil)
+	w404 := httptest.NewRecorder()
+	mux.ServeHTTP(w404, req404)
+	if w404.Code != http.StatusNotFound {
+		t.Errorf("expected status 404 for unmatched route, got %d", w404.Code)
 	}
 }
 

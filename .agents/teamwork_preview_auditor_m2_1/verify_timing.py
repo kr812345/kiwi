@@ -1,12 +1,13 @@
 import asyncio
 import json
+import os
 import time
 import httpx
 import websockets
 
 BRAIN_STREAM_URL = "http://127.0.0.1:9100/internal/chat/stream"
 GATEWAY_WS_URL = "ws://127.0.0.1:8080/api/secure/ws"
-API_TOKEN = "kiwi_secret_token_dev"
+API_TOKEN = os.environ.get("API_TOKEN", "kiwi_secret_token_dev")
 
 async def test_brain_sse_timing():
     print("=== Testing Direct Python Brain SSE Stream Timing ===")

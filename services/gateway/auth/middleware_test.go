@@ -56,6 +56,16 @@ func TestAuthMiddleware(t *testing.T) {
 		}
 	})
 
+	t.Run("query token does not replace the bearer header", func(t *testing.T) {
+		t.Setenv("API_TOKEN", "unit-token")
+		req := httptest.NewRequest(http.MethodGet, "/ping?token=unit-token", nil)
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		if rec.Code != http.StatusUnauthorized {
+			t.Fatalf("expected 401, got %d", rec.Code)
+		}
+	})
+
 	t.Run("matching bearer passes", func(t *testing.T) {
 		t.Setenv("API_TOKEN", "unit-token")
 		req := httptest.NewRequest(http.MethodGet, "/ping", nil)

@@ -157,12 +157,9 @@ func corsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// newHandler is the gateway router. stopPoll ends the approval poller when closed.
+// newHandler is the gateway router. A non-nil stopPoll runs the approval
+// poller until that channel is closed. Tests pass nil and skip the poller.
 func newHandler(stopPoll <-chan struct{}) http.Handler {
-	if stopPoll == nil {
-		stopPoll = make(chan struct{})
-	}
-
 	mux := http.NewServeMux()
 
 	// API Router
@@ -194,7 +191,9 @@ func newHandler(stopPoll <-chan struct{}) http.Handler {
 		desktopProxy.ServeHTTP(w, r)
 	}))
 
-	approvals.Start(wsHub, brain.BaseURL, stopPoll)
+	if stopPoll != nil {
+		approvals.Start(wsHub, brain.BaseURL, stopPoll)
+	}
 
 	// Mount protected routes under /api/secure/
 	apiMux.Handle("/secure/", http.StripPrefix("/secure", auth.AuthMiddleware(protectedMux)))

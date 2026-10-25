@@ -1,10 +1,19 @@
 #!/bin/bash
 # Start Pip on this machine: brain on :9100, gateway on :8080.
 # No Postgres, no Brave. The desktop tools use the in-memory fake driver.
-# Unit tests and integration tests run first. PIP_SKIP_TESTS=1 skips that gate.
+#
+# Unit tests run first, then integration tests. Neither server starts unless
+# both suites pass. PIP_SKIP_TESTS=1 skips that gate for a tight restart.
+# The suites use their own temp directories; this script does not point them
+# at ~/.pip-local or source .env before they finish.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
+if [ "${PIP_SKIP_TESTS:-}" != "1" ]; then
+  "$ROOT/scripts/test-pip.sh"
+fi
+
 DATA="${PIP_LOCAL_DIR:-$HOME/.pip-local}"
 mkdir -p "$DATA/work" "$DATA/config"
 
@@ -26,10 +35,6 @@ export BRAIN_URL="${BRAIN_URL:-http://127.0.0.1:9100}"
 export PORT="${PORT:-8080}"
 export API_TOKEN="${API_TOKEN:-kiwi_secret_token_dev}"
 unset DATABASE_URL
-
-if [ "${PIP_SKIP_TESTS:-}" != "1" ]; then
-  "$ROOT/scripts/test-pip.sh"
-fi
 
 cd "$ROOT"
 echo "Building gateway..."

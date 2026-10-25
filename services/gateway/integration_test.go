@@ -16,9 +16,15 @@ import (
 func TestIntegrationSecureChatAndDesktop(t *testing.T) {
 	t.Setenv("API_TOKEN", "integration-token")
 	t.Setenv("DATABASE_URL", "")
-	t.Setenv("PIP_NOVNC_URL", "http://127.0.0.1:9")
+	t.Setenv("PIP_NOVNC_URL", "http://127.0.0.1:1")
 
 	brainServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/health" {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`{"status":"ok"}`))
+			return
+		}
 		if r.URL.Path != "/internal/chat" {
 			http.NotFound(w, r)
 			return
@@ -45,13 +51,26 @@ func TestIntegrationSecureChatAndDesktop(t *testing.T) {
 	gateway := httptest.NewServer(newHandler(nil))
 	defer gateway.Close()
 
-	health, err := http.Get(gateway.URL + "/health")
+	health, err := http.Get(gateway.URL + "/api/health")
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer health.Body.Close()
+	healthBody, _ := io.ReadAll(health.Body)
 	if health.StatusCode != http.StatusOK {
-		t.Fatalf("health status %d", health.StatusCode)
+		t.Fatalf("api health status %d", health.StatusCode)
+	}
+	if !strings.Contains(string(healthBody), `"brain":"connected"`) {
+		t.Fatalf("api health body %s", healthBody)
+	}
+
+	rootHealth, err := http.Get(gateway.URL + "/health")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rootHealth.Body.Close()
+	if rootHealth.StatusCode != http.StatusOK {
+		t.Fatalf("root health status %d", rootHealth.StatusCode)
 	}
 
 	openChat, err := http.Post(gateway.URL+"/api/secure/chat", "application/json", strings.NewReader(`{"message":"hi"}`))
@@ -80,6 +99,38 @@ func TestIntegrationSecureChatAndDesktop(t *testing.T) {
 	}
 	if !strings.Contains(string(body), "Hi, I'm Pip") {
 		t.Fatalf("chat body %s", body)
+	}
+	if strings.Contains(string(body), "You are Pip, a small") {
+		t.Fatalf("chat returned the system prompt: %s", body)
+	}
+
+	queryChat, err := http.NewRequest(http.MethodPost, gateway.URL+"/api/secure/chat?token=integration-token", strings.NewReader(`{"message":"hi"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	queryChat.Header.Set("Content-Type", "application/json")
+	queryResp, err := http.DefaultClient.Do(queryChat)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer queryResp.Body.Close()
+	if queryResp.StatusCode != http.StatusUnauthorized {
+		t.Fatalf("expected ?token= to be refused on chat, got %d", queryResp.StatusCode)
+	}
+
+	emptyReq, err := http.NewRequest(http.MethodPost, gateway.URL+"/api/secure/chat", strings.NewReader(`{"message":"   "}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	emptyReq.Header.Set("Authorization", "Bearer integration-token")
+	emptyReq.Header.Set("Content-Type", "application/json")
+	emptyResp, err := http.DefaultClient.Do(emptyReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer emptyResp.Body.Close()
+	if emptyResp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("expected empty chat to be 400, got %d", emptyResp.StatusCode)
 	}
 
 	desktop, err := http.Get(gateway.URL + "/api/secure/desktop/vnc.html")

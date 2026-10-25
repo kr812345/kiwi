@@ -1,300 +1,419 @@
 'use client';
-import React, from 'react';
+import React, { useId } from 'react';
 
-export default function KiwiMascot({ mood = 'neutral', variant = 'icon', size = 48, animated = true, className = '' }) {
-  // Normalize mood to lowercase
-  const currentMood = mood.toLowerCase();
+export const PIP_STATES = [
+  'idle',
+  'listening',
+  'thinking',
+  'working',
+  'done',
+  'uncertain',
+  'asking',
+  'blocked',
+  'greeting',
+  'speaking',
+  'nudge',
+  'approval',
+];
 
-  // Face rendering logic
-  const renderFace = () => {
-    switch (currentMood) {
-      case 'happy':
-        return (
-          <>
-            <path d="M 30,55 Q 35,48 40,55" /> {/* Left Eye ^ */}
-            <path d="M 60,55 Q 65,48 70,55" /> {/* Right Eye ^ */}
-            <line x1="45" y1="62" x2="55" y2="62" /> {/* Mouth _ */}
-          </>
-        );
-      case 'neutral':
-        return (
-          <>
-            <line x1="35" y1="50" x2="35" y2="58" /> {/* Left Eye | */}
-            <line x1="65" y1="50" x2="65" y2="58" /> {/* Right Eye | */}
-            <line x1="45" y1="62" x2="55" y2="62" /> {/* Mouth _ */}
-          </>
-        );
-      case 'excited':
-        return (
-          <>
-            <path d="M 30,52 L 35,56 L 30,60" /> {/* Left Eye > */}
-            <path d="M 70,52 L 65,56 L 70,60" /> {/* Right Eye < */}
-            <line x1="45" y1="62" x2="55" y2="62" /> {/* Mouth _ */}
-          </>
-        );
-      case 'thinking':
-        return (
-          <>
-            <line x1="35" y1="50" x2="35" y2="58" /> {/* Left Eye | */}
-            <line x1="60" y1="56" x2="70" y2="56" /> {/* Right Eye - */}
-            <line x1="45" y1="62" x2="55" y2="62" /> {/* Mouth _ */}
-          </>
-        );
-      case 'curious':
-        return (
-          <>
-            <circle cx="35" cy="54" r="2.5" fill="currentColor" stroke="none" /> {/* Left Eye . */}
-            <circle cx="65" cy="54" r="2.5" fill="currentColor" stroke="none" /> {/* Right Eye . */}
-            <line x1="45" y1="62" x2="55" y2="62" /> {/* Mouth _ */}
-            <text x="80" y="45" fontSize="16" fill="currentColor" stroke="none" fontWeight="bold">?</text>
-          </>
-        );
-      case 'typing':
-        return (
-          <>
-            <line x1="35" y1="50" x2="35" y2="58" />
-            <line x1="65" y1="50" x2="65" y2="58" />
-            <line x1="45" y1="62" x2="55" y2="62" />
-            <g className={animated ? "animate-pulse" : ""}>
-              <circle cx="82" cy="55" r="1.5" fill="currentColor" stroke="none" />
-              <circle cx="87" cy="55" r="1.5" fill="currentColor" stroke="none" />
-              <circle cx="92" cy="55" r="1.5" fill="currentColor" stroke="none" />
-            </g>
-          </>
-        );
-      case 'listening':
-        return (
-          <>
-            <line x1="35" y1="50" x2="35" y2="58" />
-            <line x1="65" y1="50" x2="65" y2="58" />
-            <line x1="45" y1="62" x2="55" y2="62" />
-            {/* Sound waves left */}
-            <path d="M 8,50 Q 5,54 8,58 M 4,46 Q 0,54 4,62" stroke="currentColor" strokeWidth="1.5" className={animated ? "animate-ping-slow" : ""} />
-            {/* Sound waves right */}
-            <path d="M 92,50 Q 95,54 92,58 M 96,46 Q 100,54 96,62" stroke="currentColor" strokeWidth="1.5" className={animated ? "animate-ping-slow" : ""} />
-          </>
-        );
-      case 'speaking':
-        return (
-          <>
-            <path d="M 30,55 Q 35,48 40,55" />
-            <path d="M 60,55 Q 65,48 70,55" />
-            <circle cx="50" cy="62" r="3" fill="currentColor" stroke="none" className={animated ? "animate-pulse" : ""} />
-            {/* Sound waves right only */}
-            <path d="M 85,50 Q 88,54 85,58 M 90,46 Q 94,54 90,62" stroke="currentColor" strokeWidth="1.5" className={animated ? "animate-ping-slow" : ""} />
-          </>
-        );
-      case 'processing':
-        return (
-          <>
-            <circle cx="35" cy="54" r="2.5" fill="currentColor" stroke="none" />
-            {/* Spinner Eye */}
-            <path d="M 65,48 A 6 6 0 1 1 59,54" strokeWidth="2" fill="none" strokeDasharray="4 2" className={animated ? "animate-spin-slow" : ""} style={{ transformOrigin: '65px 54px' }} />
-            <line x1="45" y1="62" x2="55" y2="62" />
-          </>
-        );
-      case 'focused':
-        return (
-          <>
-            <line x1="30" y1="54" x2="40" y2="54" />
-            <line x1="60" y1="54" x2="70" y2="54" />
-            <line x1="45" y1="62" x2="55" y2="62" />
-          </>
-        );
-      case 'confused':
-        return (
-          <g transform="rotate(10, 50, 55)">
-            <circle cx="35" cy="54" r="2.5" fill="currentColor" stroke="none" />
-            <circle cx="65" cy="54" r="2.5" fill="currentColor" stroke="none" />
-            <line x1="45" y1="62" x2="55" y2="62" />
-            <text x="75" y="40" fontSize="16" fill="currentColor" stroke="none" fontWeight="bold">?</text>
-          </g>
-        );
-      case 'tired':
-        return (
-          <>
-            <line x1="30" y1="56" x2="40" y2="56" />
-            <line x1="60" y1="56" x2="70" y2="56" />
-            <line x1="45" y1="62" x2="55" y2="62" />
-          </>
-        );
-      case 'sleepy':
-        return (
-          <>
-            <path d="M 30,54 Q 35,58 40,54" />
-            <path d="M 60,54 Q 65,58 70,54" />
-            <line x1="45" y1="62" x2="55" y2="62" />
-            <text x="75" y="38" fontSize="10" fill="currentColor" stroke="none" className={animated ? "animate-pulse" : ""}>Z</text>
-            <text x="85" y="30" fontSize="14" fill="currentColor" stroke="none" className={animated ? "animate-pulse" : ""} style={{ animationDelay: '0.5s' }}>z</text>
-          </>
-        );
-      case 'surprised':
-        return (
-          <>
-            <line x1="35" y1="50" x2="35" y2="58" />
-            <line x1="65" y1="50" x2="65" y2="58" />
-            <circle cx="50" cy="62" r="2" fill="none" strokeWidth="2" />
-            {/* Action lines */}
-            <path d="M 78,40 L 85,35 M 85,45 L 92,42" strokeWidth="1.5" />
-          </>
-        );
-      case 'annoyed':
-        return (
-          <>
-            <path d="M 30,50 L 35,54 L 30,58" />
-            <path d="M 70,50 L 65,54 L 70,58" />
-            <line x1="45" y1="62" x2="55" y2="62" />
-            {/* Anger mark */}
-            <path d="M 75,35 L 78,38 L 81,35 M 78,38 L 78,43 M 75,46 L 78,43 L 81,46" strokeWidth="1.5" />
-          </>
-        );
-      case 'sad':
-        return (
-          <>
-            <path d="M 30,56 Q 35,52 40,56" />
-            <path d="M 60,56 Q 65,52 70,56" />
-            <line x1="45" y1="62" x2="55" y2="62" />
-          </>
-        );
-      case 'motivated':
-        return (
-          <>
-            <path d="M 30,55 Q 35,48 40,55" />
-            <path d="M 60,55 Q 65,48 70,55" />
-            <line x1="45" y1="62" x2="55" y2="62" />
-            {/* Action lines */}
-            <path d="M 22,40 L 15,35 M 15,45 L 8,42 M 78,40 L 85,35 M 85,45 L 92,42" strokeWidth="1.5" />
-          </>
-        );
-      case 'cool':
-        return (
-          <>
-            {/* Sunglasses */}
-            <path d="M 25,52 L 75,52 L 70,58 L 52,58 L 50,54 L 48,58 L 30,58 Z" fill="currentColor" stroke="none" />
-            <line x1="45" y1="62" x2="55" y2="62" />
-          </>
-        );
-      case 'wink':
-        return (
-          <>
-            <path d="M 30,52 L 35,56 L 30,60" />
-            <line x1="65" y1="50" x2="65" y2="58" />
-            <line x1="45" y1="62" x2="55" y2="62" />
-          </>
-        );
-      case 'success':
-        return (
-          <>
-            <path d="M 30,55 Q 35,48 40,55" />
-            <path d="M 60,55 Q 65,48 70,55" />
-            <line x1="45" y1="62" x2="55" y2="62" />
-            {/* Sparkle */}
-            <path d="M 80,30 Q 85,35 85,40 Q 85,35 90,30 Q 85,30 85,25 Q 85,30 80,30" fill="currentColor" stroke="none" className={animated ? "animate-pulse" : ""} />
-          </>
-        );
-      default: // Default to Neutral if unknown mood
-        return (
-          <>
-            <line x1="35" y1="50" x2="35" y2="58" />
-            <line x1="65" y1="50" x2="65" y2="58" />
-            <line x1="45" y1="62" x2="55" y2="62" />
-          </>
-        );
-    }
-  };
+const MOOD_TO_STATE = {
+  happy: 'done',
+  neutral: 'idle',
+  excited: 'greeting',
+  thinking: 'thinking',
+  curious: 'asking',
+  typing: 'working',
+  listening: 'listening',
+  speaking: 'speaking',
+  processing: 'working',
+  focused: 'working',
+  confused: 'uncertain',
+  tired: 'blocked',
+  sleepy: 'idle',
+  surprised: 'asking',
+  annoyed: 'blocked',
+};
 
-  const isFull = variant === 'full';
-  // If full mascot, we need a larger viewBox to fit the body
-  const viewBox = isFull ? "0 0 100 120" : "0 0 100 100";
+const STATE_ALIASES = {
+  success: 'done',
+  error: 'blocked',
+  confused: 'uncertain',
+  proactive: 'nudge',
+  'happy greeting': 'greeting',
+  'happy-greeting': 'greeting',
+  'asking for help': 'asking',
+  'asking-for-help': 'asking',
+  'error / blocked': 'blocked',
+  'error/blocked': 'blocked',
+};
+
+const STATE_LABEL = {
+  idle: 'idle',
+  listening: 'listening',
+  thinking: 'thinking',
+  working: 'working',
+  speaking: 'speaking',
+  greeting: 'happy greeting',
+  done: 'success',
+  uncertain: 'confused',
+  asking: 'asking for help',
+  blocked: 'error',
+  nudge: 'proactive',
+  approval: 'approval',
+};
+
+const PRIMARY = '#84D243';
+const BODY = '#F6F7F2';
+const SCREEN = '#0F1411';
+const ACCENT = '#C6FF6B';
+const MUTED = '#A7B1A3';
+const CHEEK = '#FFB3A8';
+const MOUTH = '#FF8A7A';
+const ALERT = '#FF4D4D';
+
+function resolveKiwiState(state, mood) {
+  if (PIP_STATES.includes(state)) return state;
+  const alias = STATE_ALIASES[String(state || '').trim().toLowerCase()];
+  if (alias && PIP_STATES.includes(alias)) return alias;
+  const fromMood = MOOD_TO_STATE[String(mood || '').toLowerCase()];
+  return fromMood || 'idle';
+}
+
+function Pill({ x, y, w, h, color = ACCENT, gloss = false }) {
+  return (
+    <g>
+      <rect x={x - 1.4} y={y - 1.6} width={w + 2.8} height={h + 3.2} rx={(w + 2.8) / 2} fill={PRIMARY} opacity="0.38" />
+      <rect x={x} y={y} width={w} height={h} rx={w / 2} fill={color} />
+      {gloss && (
+        <ellipse cx={x + w * 0.38} cy={y + h * 0.26} rx={Math.max(1.4, w * 0.16)} ry={Math.max(2, h * 0.14)} fill="#FFFFFF" opacity="0.9" />
+      )}
+    </g>
+  );
+}
+
+function ArcEye({ cx, cy, color = ACCENT }) {
+  const w = 9;
+  const y0 = cy + 3;
+  const yOuter = cy - 11;
+  const yInner = cy - 3.5;
+  return (
+    <path
+      d={`M${cx - w} ${y0} Q${cx} ${yOuter} ${cx + w} ${y0} Q${cx} ${yInner} ${cx - w} ${y0}Z`}
+      fill={color}
+    />
+  );
+}
+
+function Bar({ x, y, color }) {
+  return <rect x={x} y={y} width="16" height="7" rx="3.5" fill={color} />;
+}
+
+function QuestionMark({ x, y }) {
+  return (
+    <g transform={`translate(${x} ${y})`} fill={ACCENT}>
+      <path d="M11.2 0C6.2 0 3.2 3.1 3.2 7.2h4.4c0-2.1 1.4-3.5 3.6-3.5 2 0 3.4 1.2 3.4 3 0 1.9-1.2 2.9-3.6 4.2-2.8 1.5-4.6 3.4-4.6 6.8V19h4.4v-1.1c0-1.8 1-2.8 3.4-4.1 2.8-1.5 5-3.4 5-6.6C19.2 2.8 16.2 0 11.2 0z" />
+      <rect x="8.2" y="21.2" width="4.6" height="4.6" rx="2.3" />
+    </g>
+  );
+}
+
+function Bolt({ x, y }) {
+  return (
+    <path
+      transform={`translate(${x} ${y})`}
+      d="M11 0 L4 12 H9.2 L2 24 L20 10 H13.2 L18.5 0 Z"
+      fill={ACCENT}
+    />
+  );
+}
+
+function Heart({ x, y }) {
+  return (
+    <path
+      transform={`translate(${x} ${y})`}
+      d="M12 21 C12 21 1.2 13.6 1.2 7.6 C1.2 3.6 4.4 1.4 7.6 3.4 C9.2 4.6 10.4 6.6 12 8.4 C13.6 6.6 14.8 4.6 16.4 3.4 C19.6 1.4 22.8 3.6 22.8 7.6 C22.8 13.6 12 21 12 21 Z"
+      fill="#FF6B81"
+    />
+  );
+}
+
+function leafPath(bx, by, tx, ty, width) {
+  const mx = (bx + tx) / 2;
+  const my = (by + ty) / 2;
+  const dx = tx - bx;
+  const dy = ty - by;
+  const len = Math.hypot(dx, dy) || 1;
+  const px = (-dy / len) * width;
+  const py = (dx / len) * width;
+  return `M${bx} ${by} Q${mx + px} ${my + py} ${tx} ${ty} Q${mx - px} ${my - py} ${bx} ${by}Z`;
+}
+
+function Sprout({ lean = 0, compact = false }) {
+  const rightTip = compact ? [76, 24] : [88, 14];
+  const rightWidth = compact ? 8 : 11;
+  return (
+    <g transform={`rotate(${lean} 60 46)`}>
+      <path d="M60 50 V42" stroke={PRIMARY} strokeWidth="3.6" strokeLinecap="round" />
+      <path d={leafPath(62, 46, rightTip[0], rightTip[1], rightWidth)} fill={PRIMARY} />
+      <path d={leafPath(58, 47, 30, 8, 15)} fill={PRIMARY} />
+      <path d="M40 18 C48 28 54 36 58 44" fill="none" stroke={ACCENT} strokeWidth="2.4" strokeLinecap="round" />
+      <path
+        d={compact ? 'M66 36 C70 30 73 27 75 25' : 'M72 34 C78 26 83 20 86 16'}
+        fill="none"
+        stroke={ACCENT}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </g>
+  );
+}
+
+function Ear({ cx, cy, tone, pulse }) {
+  const ring = tone === 'dim' ? MUTED : tone === 'hot' ? ACCENT : PRIMARY;
+  return (
+    <g>
+      {tone !== 'dim' && (
+        <circle
+          cx={cx}
+          cy={cy}
+          r="18"
+          fill={PRIMARY}
+          opacity={tone === 'hot' ? 0.34 : 0.2}
+          className={pulse ? 'kiwi-move' : undefined}
+          style={pulse ? { animation: 'kiwi-glow 1.5s ease-in-out infinite' } : undefined}
+        />
+      )}
+      <circle cx={cx} cy={cy} r="13.5" fill={BODY} />
+      <circle cx={cx} cy={cy} r="8.6" fill="none" stroke={ring} strokeWidth="4.4" />
+      {tone !== 'dim' && <circle cx={cx} cy={cy} r="8.6" fill="none" stroke={ACCENT} strokeWidth="1.5" opacity="0.9" />}
+      <circle cx={cx} cy={cy} r="4.6" fill={SCREEN} />
+    </g>
+  );
+}
+
+function Mark({ state }) {
+  if (state === 'thinking' || state === 'asking' || state === 'uncertain') {
+    return <QuestionMark x={state === 'uncertain' ? 86 : 94} y={0} />;
+  }
+  if (state === 'nudge') return <Bolt x={94} y={10} />;
+  if (state === 'approval') return <Heart x={92} y={18} />;
+  if (state === 'blocked') {
+    return (
+      <g stroke={ALERT} strokeWidth="4.2" strokeLinecap="round" fill="none">
+        <path d="M92 48 l8 -8" />
+        <path d="M96 58 l9 -7" />
+        <path d="M92 68 l7 -6" />
+      </g>
+    );
+  }
+  return null;
+}
+
+function Face({ state, gloss, talk }) {
+  const pills = (specs) => specs.map((spec) => <Pill key={`${spec.x}-${spec.y}`} gloss={gloss} {...spec} />);
+
+  if (state === 'listening') {
+    return (
+      <>
+        <g transform="rotate(-10 50 82)">
+          <Pill x={44} y={74} w={10} h={16} gloss={gloss} />
+        </g>
+        <ArcEye cx={72} cy={80} />
+      </>
+    );
+  }
+
+  if (state === 'thinking') {
+    return (
+      <>
+        {pills([{ x: 43, y: 66, w: 11, h: 26 }])}
+        <Pill x={66} y={62} w={8} h={15} gloss={gloss} />
+      </>
+    );
+  }
+
+  if (state === 'working') {
+    return (
+      <>
+        <Bar x={41} y={74} color={ACCENT} />
+        <Bar x={63} y={74} color={ACCENT} />
+      </>
+    );
+  }
+
+  if (state === 'done') {
+    return (
+      <>
+        <ArcEye cx={49} cy={78} />
+        <ArcEye cx={73} cy={78} />
+      </>
+    );
+  }
+
+  if (state === 'greeting') {
+    return (
+      <>
+        <ArcEye cx={49} cy={72} />
+        <ArcEye cx={73} cy={72} />
+        <ellipse cx="44" cy="88" rx="5.5" ry="3.3" fill={CHEEK} />
+        <ellipse cx="76" cy="88" rx="5.5" ry="3.3" fill={CHEEK} />
+        <ellipse cx="60" cy="91" rx="5.2" ry="3.8" fill={MOUTH} />
+      </>
+    );
+  }
+
+  if (state === 'speaking') {
+    return (
+      <>
+        <ArcEye cx={49} cy={70} />
+        <ArcEye cx={73} cy={70} />
+        <ellipse cx="44" cy="86" rx="4.4" ry="2.6" fill={CHEEK} opacity="0.85" />
+        <ellipse cx="76" cy="86" rx="4.4" ry="2.6" fill={CHEEK} opacity="0.85" />
+        <g
+          className={talk ? 'kiwi-move kiwi-mouth' : 'kiwi-mouth'}
+          style={talk ? { animation: 'kiwi-talk 0.42s ease-in-out infinite' } : undefined}
+        >
+          <ellipse cx="60" cy="90" rx="8" ry="6.4" fill={MOUTH} />
+          <ellipse cx="60" cy="88.6" rx="3.6" ry="2.6" fill="#FFD2C8" opacity="0.55" />
+        </g>
+      </>
+    );
+  }
+
+  if (state === 'uncertain') {
+    return (
+      <>
+        <Pill x={42} y={68} w={11} h={22} gloss={gloss} />
+        <circle cx="72" cy="76" r="3.5" fill={ACCENT} />
+      </>
+    );
+  }
+
+  if (state === 'asking') {
+    return (
+      <>
+        <Pill x={42} y={60} w={11} h={26} gloss={gloss} />
+        <Pill x={64} y={62} w={10} h={22} gloss={gloss} />
+      </>
+    );
+  }
+
+  if (state === 'blocked') {
+    return (
+      <>
+        <Bar x={41} y={74} color={ALERT} />
+        <Bar x={63} y={74} color={ALERT} />
+      </>
+    );
+  }
+
+  if (state === 'nudge') {
+    return (
+      <>
+        <Pill x={41} y={64} w={13} h={24} gloss={gloss} />
+        <Pill x={64} y={64} w={13} h={24} gloss={gloss} />
+      </>
+    );
+  }
+
+  if (state === 'approval') {
+    return (
+      <>
+        <Pill x={44} y={66} w={10} h={18} gloss={gloss} />
+        <Pill x={66} y={66} w={10} h={18} gloss={gloss} />
+      </>
+    );
+  }
+
+  return pills([
+    { x: 43, y: 64, w: 12, h: 30 },
+    { x: 65, y: 64, w: 12, h: 30 },
+  ]);
+}
+
+const POSE = {
+  idle: { tilt: 0, lean: 0 },
+  listening: { tilt: -4, lean: -8 },
+  thinking: { tilt: 5, lean: 8 },
+  working: { tilt: 0, lean: 0 },
+  done: { tilt: 0, lean: -6 },
+  greeting: { tilt: -3, lean: -8 },
+  speaking: { tilt: 0, lean: -4 },
+  uncertain: { tilt: -8, lean: 16 },
+  asking: { tilt: 4, lean: 6 },
+  blocked: { tilt: 3, lean: 18 },
+  nudge: { tilt: -5, lean: -12 },
+  approval: { tilt: -2, lean: -4 },
+};
+
+export default function KiwiMascot({
+  mood = 'neutral',
+  state,
+  variant = 'icon',
+  size = 48,
+  animated = true,
+  className = '',
+}) {
+  const resolved = resolveKiwiState(state, mood);
+  const pose = POSE[resolved] || POSE.idle;
+  const gloss = size >= 72;
+  const bob = animated && (resolved === 'idle' || resolved === 'greeting' || resolved === 'done' || resolved === 'nudge');
+  const talk = animated && resolved === 'speaking';
+  const mark = resolved === 'thinking' || resolved === 'uncertain' || resolved === 'asking' || resolved === 'nudge' || resolved === 'approval';
+  const earTone = resolved === 'blocked' ? 'dim' : resolved === 'listening' || resolved === 'nudge' ? 'hot' : 'rest';
+  const clipId = `kiwi-body-${useId().replace(/:/g, '')}`;
+  const label = STATE_LABEL[resolved] || resolved;
 
   return (
-    <div className={`kiwi-mascot-container ${className}`} style={{ width: size, height: isFull ? size * 1.2 : size, display: 'inline-block' }}>
-      <svg 
-        viewBox={viewBox}
-        width="100%" 
-        height="100%"
-        style={{ 
-          color: 'var(--primary, #8be942)', 
-          overflow: 'visible' 
-        }}
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 120 120"
+      role="img"
+      aria-label={`Kiwi ${label}`}
+      data-state={resolved}
+      className={className}
+      style={{ display: 'block', overflow: 'visible' }}
+    >
+      <style>{`
+        @keyframes kiwi-bob { 50% { transform: translateY(-1.6px); } }
+        @keyframes kiwi-talk { 50% { transform: scaleY(0.62); } }
+        @keyframes kiwi-glow { 50% { opacity: 0.55; } }
+        .kiwi-mouth { transform-box: fill-box; transform-origin: center; }
+        @media (prefers-reduced-motion: reduce) {
+          .kiwi-move { animation: none !important; }
+        }
+      `}</style>
+      <ellipse
+        cx="60"
+        cy="114"
+        rx={variant === 'full' ? 30 : 24}
+        ry={variant === 'full' ? 5.5 : 4}
+        fill={PRIMARY}
+        opacity={variant === 'full' ? 0.5 : 0.34}
+      />
+      <g
+        className={bob ? 'kiwi-move' : undefined}
+        style={bob ? { animation: 'kiwi-bob 3.2s ease-in-out infinite', transformOrigin: '60px 74px' } : undefined}
       >
-        <defs>
-          <linearGradient id="glowG" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="currentColor" stopOpacity="0.2"/>
-            <stop offset="100%" stopColor="#000" stopOpacity="0"/>
-          </linearGradient>
-          {/* Subtle breathing animation for full body */}
-          <style>{`
-            @keyframes breathe {
-              0%, 100% { transform: translateY(0) scale(1); }
-              50% { transform: translateY(-2px) scale(1.02); }
-            }
-            @keyframes spin-slow {
-              from { transform: rotate(0deg); }
-              to { transform: rotate(360deg); }
-            }
-            @keyframes ping-slow {
-              0% { transform: scale(0.9); opacity: 0.8; }
-              50% { transform: scale(1.1); opacity: 0.3; }
-              100% { transform: scale(0.9); opacity: 0.8; }
-            }
-            .animate-breathe { animation: breathe 4s ease-in-out infinite; transform-origin: center bottom; }
-            .animate-spin-slow { animation: spin-slow 2s linear infinite; }
-            .animate-ping-slow { animation: ping-slow 2s ease-in-out infinite; }
-            .animate-pulse { animation: ping-slow 1.5s ease-in-out infinite; }
-          `}</style>
-        </defs>
-
-        <g className={animated && isFull ? "animate-breathe" : ""}>
-          {/* BODY (Hoodie) - Only rendered if variant is 'full' */}
-          {isFull && (
-            <g transform="translate(0, 10)">
-              {/* Shoulders / Torso */}
-              <path 
-                d="M 25,80 C 20,90 15,105 10,115 L 90,115 C 85,105 80,90 75,80 C 65,75 35,75 25,80 Z" 
-                fill="#121a14" 
-                stroke="currentColor" 
-                strokeWidth="2" 
-                strokeLinejoin="round" 
-              />
-              {/* Hoodie strings */}
-              <path d="M 40,82 L 42,95 M 60,82 L 58,95" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              {/* Pocket */}
-              <path d="M 25,105 L 35,95 L 65,95 L 75,105" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-              
-              {/* Little ^_^ on the hoodie pocket */}
-              <g transform="translate(43, 98) scale(0.4)" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <path d="M 0,5 Q 5,0 10,5" fill="none" />
-                <path d="M 20,5 Q 25,0 30,5" fill="none" />
-                <line x1="12" y1="8" x2="18" y2="8" fill="none" />
-              </g>
-            </g>
-          )}
-
-          {/* HEAD */}
-          {/* Leaves */}
-          <path d="M49,29 C45,15 32,18 32,18 C32,18 40,26 49,29 Z" fill="currentColor" />
-          <path d="M51,29 C56,12 72,15 72,15 C72,15 60,26 51,29 Z" fill="currentColor" />
-          
-          {/* Rounded Box */}
-          <rect 
-            x="15" 
-            y="29" 
-            width="70" 
-            height="50" 
-            rx="12" 
-            ry="12" 
-            fill={isFull ? '#0f1710' : 'url(#glowG)'} 
-            stroke="currentColor" 
-            strokeWidth="2.5" 
-          />
-
-          {/* Face Container */}
-          <g fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            {renderFace()}
+        <g transform={`rotate(${pose.tilt} 60 74)`}>
+          <Ear cx={16} cy={76} tone={earTone} pulse={animated && earTone === 'hot'} />
+          <Ear cx={104} cy={76} tone={earTone} pulse={animated && earTone === 'hot'} />
+          <g clipPath={`url(#${clipId})`}>
+            <circle cx="60" cy="74" r="36" fill={BODY} />
+            {gloss && <ellipse cx="46" cy="58" rx="16" ry="10" fill="#FFFFFF" opacity="0.72" />}
+            {gloss && <ellipse cx="74" cy="96" rx="22" ry="14" fill={MUTED} opacity="0.32" />}
           </g>
+          <clipPath id={clipId}>
+            <circle cx="60" cy="74" r="36" />
+          </clipPath>
+          <circle cx="60" cy="74" r="36" fill="none" stroke={MUTED} strokeWidth="1.25" opacity="0.55" />
+          <ellipse cx="60" cy="77" rx="25" ry="21" fill={SCREEN} />
+          <Face state={resolved} gloss={gloss} talk={talk} />
+          <Sprout lean={pose.lean} compact={mark} />
+          <Mark state={resolved} />
         </g>
-      </svg>
-    </div>
+      </g>
+    </svg>
   );
 }

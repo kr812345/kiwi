@@ -12,9 +12,11 @@ import (
 	"syscall"
 	"time"
 
+	"kiwi/services/gateway/approvals"
 	"kiwi/services/gateway/auth"
 	"kiwi/services/gateway/brain"
 	"kiwi/services/gateway/db"
+	"kiwi/services/gateway/desktop"
 	"kiwi/services/gateway/ws"
 )
 
@@ -38,7 +40,7 @@ type ChatResponse struct {
 
 func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	
+
 	dbStatus := "disconnected"
 	if db.Pool != nil {
 		dbStatus = "connected"
@@ -48,7 +50,7 @@ func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	if brain.HealthWithContext(r.Context()) {
 		brainStatus = "connected"
 	}
-	
+
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(HealthResponse{
 		Status:   "ok",
@@ -155,15 +157,9 @@ func corsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-
-func main() {
-	// Initialize Database
-	if err := db.InitDB(); err != nil {
-		log.Fatalf("Database initialization failed: %v", err)
-	}
-	defer db.CloseDB()
-
-	// Initialize router
+// newHandler is the gateway router. A non-nil stopPoll runs the approval
+// poller until that channel is closed. Tests pass nil and skip the poller.
+func newHandler(stopPoll <-chan struct{}) http.Handler {
 	mux := http.NewServeMux()
 
 	// API Router
@@ -186,6 +182,19 @@ func main() {
 		ws.ServeWS(wsHub, w, r)
 	})
 
+	desktopProxy := desktop.Handler("")
+	apiMux.Handle("/secure/desktop/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !desktop.Authorized(r) {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		desktopProxy.ServeHTTP(w, r)
+	}))
+
+	if stopPoll != nil {
+		approvals.Start(wsHub, brain.BaseURL, stopPoll)
+	}
+
 	// Mount protected routes under /api/secure/
 	apiMux.Handle("/secure/", http.StripPrefix("/secure", auth.AuthMiddleware(protectedMux)))
 
@@ -200,6 +209,19 @@ func main() {
 		http.Error(w, "Not found", http.StatusNotFound)
 	})
 
+	return corsMiddleware(mux)
+}
+
+func main() {
+	// Initialize Database
+	if err := db.InitDB(); err != nil {
+		log.Fatalf("Database initialization failed: %v", err)
+	}
+	defer db.CloseDB()
+
+	stopPoll := make(chan struct{})
+	defer close(stopPoll)
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
@@ -207,7 +229,7 @@ func main() {
 
 	srv := &http.Server{
 		Addr:    ":" + port,
-		Handler: corsMiddleware(mux),
+		Handler: newHandler(stopPoll),
 	}
 
 	stop := make(chan os.Signal, 1)
@@ -229,6 +251,6 @@ func main() {
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Fatalf("Gateway Shutdown Failed: %+v", err)
 	}
-	
+
 	log.Println("Gateway exited gracefully")
 }

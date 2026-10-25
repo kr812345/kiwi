@@ -1,0 +1,17 @@
+[Unit]
+Description=Pip durable scheduler
+After=network.target
+
+[Service]
+User=pip
+Group=pip
+WorkingDirectory=/opt/kiwi/services/orchestrator
+Environment=PIP_BRAIN_URL=http://127.0.0.1:9100
+Environment=PIP_JOBS_PATH=/var/lib/pip/jobs.sqlite
+Environment=PIP_WORK_ROOT=/home/pip/work
+ExecStart=/opt/kiwi/services/orchestrator/.venv/bin/python -m scheduler.pip_cron
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

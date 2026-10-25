@@ -4,19 +4,30 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import KiwiMascot from '@/components/KiwiMascot';
 import BottomNav from '@/components/BottomNav';
-import { useKiwiChat } from '@/hooks/useKiwiChat';
+import { resolveKiwiConnectionConfig, useKiwiChat } from '@/hooks/useKiwiChat';
 import { Send, Mic, Sparkles, Code, FileText, Terminal, Zap } from 'lucide-react';
 
 export default function ChatScreen() {
   const router = useRouter();
-  const { messages, isConnected, isTyping, lastTiming, sendMessage } = useKiwiChat();
+  const {
+    messages,
+    isConnected,
+    isTyping,
+    lastTiming,
+    serverUrl,
+    pipState,
+    pendingApproval,
+    resolveApproval,
+    setListening,
+    sendMessage,
+  } = useKiwiChat();
   const [input, setInput] = useState('');
   const messagesEndRef = useRef(null);
 
   const suggestions = [
     { icon: Sparkles, text: 'Ping timing check', prompt: 'ping timing check' },
     { icon: Code, text: 'Debug a React hook', prompt: 'help me debug a react hook' },
-    { icon: FileText, text: 'System status', prompt: 'how are you feeling today kiwi?' },
+    { icon: FileText, text: 'System status', prompt: 'how are you?' },
     { icon: Terminal, text: 'Write a bash script', prompt: 'write a bash script to check open ports' },
   ];
 
@@ -47,11 +58,11 @@ export default function ChatScreen() {
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ width: 38, height: 38 }}>
-            <KiwiMascot size={38} state={isTyping ? 'thinking' : 'idle'} />
+            <KiwiMascot size={38} state={pipState || (isTyping ? 'thinking' : 'idle')} />
           </div>
           <div>
             <h1 style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.3px', color: 'var(--text-primary)' }}>
-              Kiwi AI
+              Pip
             </h1>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <span
@@ -64,13 +75,32 @@ export default function ChatScreen() {
                 }}
               />
               <span style={{ fontSize: 11, color: 'var(--text-secondary)', fontWeight: 500 }}>
-                {isConnected ? 'Synapse OS Online' : 'Reconnecting...'}
+                {isConnected ? 'Computer online' : 'Reconnecting...'}
               </span>
             </div>
           </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button
+            type="button"
+            onClick={() => {
+              const { token } = resolveKiwiConnectionConfig();
+              if (!serverUrl) return;
+              window.open(`${serverUrl}/api/secure/desktop/vnc.html?token=${encodeURIComponent(token)}`, '_blank');
+            }}
+            style={{
+              height: 32,
+              padding: '0 12px',
+              borderRadius: 999,
+              border: '1px solid var(--border-subtle)',
+              background: 'transparent',
+              color: 'var(--text-primary)',
+              fontSize: 12,
+            }}
+          >
+            Desktop
+          </button>
           {lastTiming && (
             <div
               title={`TTFT: ${lastTiming.ttftMs}ms | Total: ${lastTiming.totalMs}ms | Tokens: ${lastTiming.tokenCount}`}
@@ -113,6 +143,34 @@ export default function ChatScreen() {
           </button>
         </div>
       </header>
+      {pendingApproval && (
+        <div
+          style={{
+            margin: '12px 16px 0',
+            padding: '12px 14px',
+            borderRadius: 16,
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-subtle)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
+          }}
+        >
+          <strong style={{ fontSize: 13 }}>Needs your OK</strong>
+          <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+            {pendingApproval.detail || pendingApproval.action}
+            {pendingApproval.secret ? ` (${pendingApproval.secret})` : ''}
+          </span>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button type="button" onClick={() => resolveApproval(true)} style={{ flex: 1, height: 36, borderRadius: 999, border: 'none', background: 'var(--kiwi-green)', fontWeight: 600 }}>
+              Allow
+            </button>
+            <button type="button" onClick={() => resolveApproval(false)} style={{ flex: 1, height: 36, borderRadius: 999, border: '1px solid var(--border-subtle)', background: 'transparent', color: 'var(--text-primary)' }}>
+              Refuse
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Chat Messages Area */}
       <main
@@ -209,14 +267,14 @@ export default function ChatScreen() {
               >
                 {isThinkingBubble ? (
                   <span style={{ color: 'var(--kiwi-green)', fontSize: 13, fontStyle: 'italic' }}>
-                    [ ^ _ ^ ] kiwi is thinking...
+                    Pip is thinking.
                   </span>
                 ) : (
                   msg.content
                 )}
               </div>
               <span style={{ fontSize: 10, color: 'var(--text-muted)', padding: '0 4px' }}>
-                {isUser ? 'You' : 'Kiwi'} • {msg.timestamp || 'now'}
+                {isUser ? 'You' : 'Pip'} • {msg.timestamp || 'now'}
                 {!isUser && msg.timing
                   ? ` • TTFT ${msg.timing.ttftMs}ms · ${msg.timing.totalMs}ms (${msg.timing.tokenCount} tok)`
                   : ''}
@@ -254,7 +312,9 @@ export default function ChatScreen() {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Message Kiwi..."
+          placeholder="Message Pip..."
+          onFocus={() => setListening(true)}
+          onBlur={() => setListening(false)}
           style={{
             flex: 1,
             background: 'transparent',

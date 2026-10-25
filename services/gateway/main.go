@@ -12,9 +12,11 @@ import (
 	"syscall"
 	"time"
 
+	"kiwi/services/gateway/approvals"
 	"kiwi/services/gateway/auth"
 	"kiwi/services/gateway/brain"
 	"kiwi/services/gateway/db"
+	"kiwi/services/gateway/desktop"
 	"kiwi/services/gateway/ws"
 )
 
@@ -38,7 +40,7 @@ type ChatResponse struct {
 
 func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	
+
 	dbStatus := "disconnected"
 	if db.Pool != nil {
 		dbStatus = "connected"
@@ -48,7 +50,7 @@ func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	if brain.HealthWithContext(r.Context()) {
 		brainStatus = "connected"
 	}
-	
+
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(HealthResponse{
 		Status:   "ok",
@@ -155,7 +157,6 @@ func corsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-
 func main() {
 	// Initialize Database
 	if err := db.InitDB(); err != nil {
@@ -185,6 +186,19 @@ func main() {
 	apiMux.HandleFunc("/secure/ws", func(w http.ResponseWriter, r *http.Request) {
 		ws.ServeWS(wsHub, w, r)
 	})
+
+	desktopProxy := desktop.Handler("")
+	apiMux.Handle("/secure/desktop/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !desktop.Authorized(r) {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		desktopProxy.ServeHTTP(w, r)
+	}))
+
+	stopPoll := make(chan struct{})
+	approvals.Start(wsHub, brain.BaseURL, stopPoll)
+	defer close(stopPoll)
 
 	// Mount protected routes under /api/secure/
 	apiMux.Handle("/secure/", http.StripPrefix("/secure", auth.AuthMiddleware(protectedMux)))
@@ -229,6 +243,6 @@ func main() {
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Fatalf("Gateway Shutdown Failed: %+v", err)
 	}
-	
+
 	log.Println("Gateway exited gracefully")
 }

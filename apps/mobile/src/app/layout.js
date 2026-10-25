@@ -2,7 +2,7 @@ import './globals.css';
 import BottomNav from '@/components/BottomNav';
 
 export const metadata = {
-  title: 'Kiwi AI Assistant',
+  title: 'Pip',
   description: 'Personal AI Assistant powered by Synapse OS',
   manifest: '/manifest.json',
 };

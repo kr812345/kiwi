@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"kiwi/services/gateway/approvals"
 	"kiwi/services/gateway/brain"
 	"kiwi/services/gateway/db"
 )
@@ -66,6 +67,14 @@ func NewHub() *Hub {
 		broadcast:  make(chan []byte, 256),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
+	}
+}
+
+// Broadcast sends one frame to every authenticated client.
+func (h *Hub) Broadcast(message []byte) {
+	select {
+	case h.broadcast <- message:
+	default:
 	}
 }
 
@@ -239,6 +248,8 @@ func (c *Client) readPump() {
 		switch wsMsg.Type {
 		case "chat.message":
 			c.handleChatMessage(wsMsg)
+		case "approval.decision":
+			c.handleApproval(wsMsg)
 		case "auth":
 			// Redundant auth frame when already authenticated
 			continue
@@ -279,6 +290,29 @@ func (c *Client) writePump() {
 	}
 }
 
+func (c *Client) handleApproval(msg WSMessage) {
+	id := strings.TrimSpace(msg.Content)
+	allow := false
+	if meta, ok := msg.Metadata.(map[string]any); ok {
+		if value, ok := meta["allow"].(bool); ok {
+			allow = value
+		}
+	}
+	if id == "" {
+		return
+	}
+	if err := approvals.Decide(brain.BaseURL, id, allow); err != nil {
+		log.Printf("approval decision failed: %v", err)
+		c.sendMessage(WSMessage{Type: "status.state", ConversationID: msg.ConversationID, Content: "blocked"})
+		return
+	}
+	next := "idle"
+	if !allow {
+		next = "blocked"
+	}
+	c.sendMessage(WSMessage{Type: "status.state", ConversationID: msg.ConversationID, Content: next})
+}
+
 // handleChatMessage handles an incoming user chat message, emits status, streams tokens, and saves turns.
 func (c *Client) handleChatMessage(msg WSMessage) {
 	userContent := strings.TrimSpace(msg.Content)
@@ -300,13 +334,12 @@ func (c *Client) handleChatMessage(msg WSMessage) {
 		}
 	}
 
-	// 1. Emit status.thinking frame
-	thinkingMsg := WSMessage{
+	// 1. Emit status.thinking. The phone maps this to Pip's thinking pose.
+	c.sendMessage(WSMessage{
 		Type:           "status.thinking",
 		ConversationID: convID,
-		Content:        "kiwi is thinking...",
-	}
-	c.sendMessage(thinkingMsg)
+		Content:        "Pip is thinking.",
+	})
 
 	// 2. Save user message to database if connected
 	if db.Pool != nil {
@@ -360,7 +393,7 @@ func (c *Client) handleChatMessage(msg WSMessage) {
 
 		completedContent := fullResponse.String()
 
-		// 4. Send chat.complete frame with full concatenated response
+		// 4. Send chat.complete. The phone maps this to Pip's done pose.
 		completeMsg := WSMessage{
 			Type:           "chat.complete",
 			ConversationID: convID,

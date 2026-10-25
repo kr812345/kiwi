@@ -1,0 +1,19 @@
+[Unit]
+Description=Pip vault unlock helper
+After=network.target
+
+[Service]
+User=root
+Group=root
+WorkingDirectory=/opt/kiwi/services/orchestrator
+Environment=PIP_VAULT_SOCK=/run/pip/vault.sock
+Environment=PIP_VAULT_KEY_FILE=/etc/pip/vault.key
+Environment=PIP_VAULT_PATH=/var/lib/pip/vault.json
+Environment=PIP_VAULT_GROUP=pip
+RuntimeDirectory=pip
+ExecStart=/opt/kiwi/services/orchestrator/.venv/bin/python -m vault.helper serve
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

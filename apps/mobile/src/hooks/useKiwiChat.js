@@ -39,7 +39,7 @@ export function useKiwiChat() {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: "hey! [ ^ _ ^ ] i'm kiwi. my websocket ears are open — what are we building or debugging today?",
+      content: "Hi, I'm Pip. Tell me what's on your plate and I'll help keep it in order.",
       timestamp: formatNow(),
     },
   ]);
@@ -47,7 +47,10 @@ export function useKiwiChat() {
   const [isTyping, setIsTyping] = useState(false);
   const [lastTiming, setLastTiming] = useState(null);
   const [serverUrl, setServerUrl] = useState('');
+  const [pipState, setPipState] = useState('greeting');
+  const [pendingApproval, setPendingApproval] = useState(null);
   const wsRef = useRef(null);
+  const greetedRef = useRef(false);
   const reconnectTimeoutRef = useRef(null);
   const timingRef = useRef(null);
 
@@ -73,6 +76,15 @@ export function useKiwiChat() {
 
       ws.onopen = () => {
         setIsConnected(true);
+        if (!greetedRef.current) {
+          greetedRef.current = true;
+          setPipState('greeting');
+          setTimeout(() => {
+            setPipState((current) => (current === 'greeting' ? 'idle' : current));
+          }, 1100);
+        } else {
+          setPipState('idle');
+        }
         if (reconnectTimeoutRef.current) {
           clearTimeout(reconnectTimeoutRef.current);
           reconnectTimeoutRef.current = null;
@@ -84,13 +96,39 @@ export function useKiwiChat() {
           const data = JSON.parse(event.data);
           const nowPerf = typeof performance !== 'undefined' ? performance.now() : Date.now();
 
-          if (data.type === 'status.thinking') {
+          if (data.type === 'status.state' && data.content) {
+            setPipState(data.content);
+          } else if (data.type === 'approval.required') {
+            setPipState('approval');
+            setPendingApproval({
+              id: data.metadata?.id || '',
+              action: data.metadata?.action || '',
+              secret: data.metadata?.secret || '',
+              detail: data.metadata?.detail || data.content || '',
+            });
+          } else if (
+            data.type === 'status.nudge' ||
+            data.type === 'status.done' ||
+            data.type === 'status.working' ||
+            data.type === 'status.blocked'
+          ) {
+            const next = data.metadata?.state || data.type.replace('status.', '');
+            setPipState(next);
+            if (data.content) {
+              setMessages((prev) => [
+                ...prev,
+                { role: 'assistant', content: data.content, timestamp: formatNow() },
+              ]);
+            }
+          } else if (data.type === 'status.thinking') {
+            setPipState('thinking');
             setIsTyping(true);
             setMessages((prev) => [
               ...prev,
               { role: 'assistant', content: '', timestamp: formatNow(), streaming: true },
             ]);
           } else if (data.type === 'chat.stream') {
+            setPipState('speaking');
             const tokenChunk = data.content ?? data.payload?.token ?? '';
             if (timingRef.current) {
               if (timingRef.current.firstTokenAt === null) {
@@ -115,6 +153,14 @@ export function useKiwiChat() {
             });
           } else if (data.type === 'chat.complete') {
             setIsTyping(false);
+            const fullTextEarly = data.content ?? data.payload?.full_text ?? '';
+            let nextState = 'done';
+            if (fullTextEarly.includes('Not sure')) nextState = 'uncertain';
+            else if (/which one/i.test(fullTextEarly)) nextState = 'asking';
+            setPipState(nextState);
+            setTimeout(() => {
+              setPipState((current) => (current === nextState ? 'idle' : current));
+            }, 700);
             const fullText = data.content ?? data.payload?.full_text ?? '';
             let timingSummary = null;
             if (timingRef.current) {
@@ -151,6 +197,7 @@ export function useKiwiChat() {
             });
           } else if (data.type === 'error') {
             setIsTyping(false);
+            setPipState('blocked');
             timingRef.current = null;
             const errMsg = data.content || data.payload?.message || 'Unknown error occurred';
             setMessages((prev) => [
@@ -259,7 +306,7 @@ export function useKiwiChat() {
           ...prev,
           {
             role: 'assistant',
-            content: `[ ^ _ ^ ] connection hiccup reaching ${activeUrl} (${err.message}). check settings or gateway status!`,
+            content: `Pip can't reach ${activeUrl} (${err.message}). Check the gateway, then try again.`,
             timestamp: formatNow(),
           },
         ]);
@@ -271,12 +318,40 @@ export function useKiwiChat() {
     []
   );
 
+  const resolveApproval = useCallback((allow) => {
+    const current = pendingApproval;
+    if (!current?.id || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+      return;
+    }
+    wsRef.current.send(
+      JSON.stringify({
+        type: 'approval.decision',
+        content: current.id,
+        metadata: { allow: Boolean(allow) },
+      })
+    );
+    setPendingApproval(null);
+    setPipState(allow ? 'idle' : 'blocked');
+  }, [pendingApproval]);
+
+  const setListening = useCallback((listening) => {
+    setPipState((current) => {
+      if (listening && (current === 'idle' || current === 'greeting')) return 'listening';
+      if (!listening && current === 'listening') return 'idle';
+      return current;
+    });
+  }, []);
+
   return {
     messages,
     isConnected,
     isTyping,
     lastTiming,
     serverUrl,
+    pipState,
+    pendingApproval,
+    resolveApproval,
+    setListening,
     sendMessage,
     reconnect: connect,
   };

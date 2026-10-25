@@ -157,14 +157,12 @@ func corsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func main() {
-	// Initialize Database
-	if err := db.InitDB(); err != nil {
-		log.Fatalf("Database initialization failed: %v", err)
+// newHandler is the gateway router. stopPoll ends the approval poller when closed.
+func newHandler(stopPoll <-chan struct{}) http.Handler {
+	if stopPoll == nil {
+		stopPoll = make(chan struct{})
 	}
-	defer db.CloseDB()
 
-	// Initialize router
 	mux := http.NewServeMux()
 
 	// API Router
@@ -196,9 +194,7 @@ func main() {
 		desktopProxy.ServeHTTP(w, r)
 	}))
 
-	stopPoll := make(chan struct{})
 	approvals.Start(wsHub, brain.BaseURL, stopPoll)
-	defer close(stopPoll)
 
 	// Mount protected routes under /api/secure/
 	apiMux.Handle("/secure/", http.StripPrefix("/secure", auth.AuthMiddleware(protectedMux)))
@@ -214,6 +210,19 @@ func main() {
 		http.Error(w, "Not found", http.StatusNotFound)
 	})
 
+	return corsMiddleware(mux)
+}
+
+func main() {
+	// Initialize Database
+	if err := db.InitDB(); err != nil {
+		log.Fatalf("Database initialization failed: %v", err)
+	}
+	defer db.CloseDB()
+
+	stopPoll := make(chan struct{})
+	defer close(stopPoll)
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
@@ -221,7 +230,7 @@ func main() {
 
 	srv := &http.Server{
 		Addr:    ":" + port,
-		Handler: corsMiddleware(mux),
+		Handler: newHandler(stopPoll),
 	}
 
 	stop := make(chan os.Signal, 1)
